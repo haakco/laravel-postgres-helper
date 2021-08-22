@@ -12,7 +12,7 @@ This is where your description should go. Take a look at [contributing.md](contr
 Via Composer
 
 ``` bash
-$ composer require haakco/postgreshelper
+$ composer require haakco/postgres-helper
 ```
 
 ## Usage
@@ -44,14 +44,14 @@ If you discover any security related issues, please email tim@haak.co instead of
 
 proprietary. Please see the [license file](license.md) for more information.
 
-[ico-version]: https://img.shields.io/packagist/v/haakco/postgreshelper.svg?style=flat-square
-[ico-downloads]: https://img.shields.io/packagist/dt/haakco/postgreshelper.svg?style=flat-square
-[ico-travis]: https://img.shields.io/travis/haakco/postgreshelper/master.svg?style=flat-square
+[ico-version]: https://img.shields.io/packagist/v/haakco/postgres-helper.svg?style=flat-square
+[ico-downloads]: https://img.shields.io/packagist/dt/haakco/postgres-helper.svg?style=flat-square
+[ico-travis]: https://img.shields.io/travis/haakco/postgres-helper/master.svg?style=flat-square
 [ico-styleci]: https://styleci.io/repos/12345678/shield
 
-[link-packagist]: https://packagist.org/packages/haakco/postgreshelper
-[link-downloads]: https://packagist.org/packages/haakco/postgreshelper
-[link-travis]: https://travis-ci.org/haakco/postgreshelper
+[link-packagist]: https://packagist.org/packages/haakco/postgres-helper
+[link-downloads]: https://packagist.org/packages/haakco/postgres-helper
+[link-travis]: https://travis-ci.org/haakco/postgres-helper
 [link-styleci]: https://styleci.io/repos/12345678
 [link-author]: https://github.com/haakco
 [link-contributors]: ../../contributors

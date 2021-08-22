@@ -9,7 +9,7 @@
       "homepage": "https://haak.co"
     }
   ],
-  "homepage": "https://github.com/haakco/postgreshelper",
+  "homepage": "https://github.com/haakco/postgres-helper",
   "keywords": [
     "Laravel",
     "PostgresHelper"
