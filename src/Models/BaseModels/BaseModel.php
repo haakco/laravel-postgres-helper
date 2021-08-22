@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\BaseModels;
+namespace HaakCo\PostgresHelper\Models\BaseModels;
 
 use DateTimeInterface;
 use Eloquent;

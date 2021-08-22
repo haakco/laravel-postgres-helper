@@ -1,6 +1,6 @@
 <?php
 
-use App\Libraries\Helper\PgHelperLibrary;
+use HaakCo\PostgresHelper\Libraries\Helper\PgHelperLibrary;
 use Illuminate\Database\Migrations\Migration;
 
 class AddUpdateTimestampFunction extends Migration
