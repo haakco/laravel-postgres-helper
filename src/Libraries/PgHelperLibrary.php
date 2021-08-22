@@ -1,6 +1,6 @@
 <?php
 
-namespace HaakCo\PostgresHelper\Libraries\Helper;
+namespace HaakCo\PostgresHelper\Libraries;
 
 use Illuminate\Support\Facades\DB;
 
