@@ -1,5 +1,5 @@
 {
-  "name": "haakco/postgres-helper",
+  "name": "haakco/laravel-postgres-helper",
   "description": ":package_description",
   "license": "proprietary",
   "authors": [
@@ -9,7 +9,7 @@
       "homepage": "https://haak.co"
     }
   ],
-  "homepage": "https://github.com/haakco/postgres-helper",
+  "homepage": "https://github.com/haakco/laravel-postgres-helper",
   "keywords": [
     "Laravel",
     "PostgresHelper"

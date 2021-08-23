@@ -15,38 +15,13 @@ class PostgresHelperServiceProvider extends ServiceProvider
     {
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'haakco');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'haakco');
-         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
 
         // Publishing is only necessary when using the CLI.
         if ($this->app->runningInConsole()) {
             $this->bootForConsole();
         }
-    }
-
-    /**
-     * Register any package services.
-     *
-     * @return void
-     */
-    public function register(): void
-    {
-        $this->mergeConfigFrom(__DIR__.'/../config/postgreshelper.php', 'postgreshelper');
-
-        // Register the service the package provides.
-        $this->app->singleton('postgreshelper', function ($app) {
-            return new PostgresHelper;
-        });
-    }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
-    {
-        return ['postgreshelper'];
     }
 
     /**
@@ -58,8 +33,12 @@ class PostgresHelperServiceProvider extends ServiceProvider
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__.'/../config/postgreshelper.php' => config_path('postgreshelper.php'),
+            __DIR__ . '/../config/postgreshelper.php' => config_path('postgreshelper.php'),
         ], 'postgreshelper.config');
+
+        $this->publishes([
+            __DIR__ . '/../database/migrations/' => database_path('migrations')
+        ], 'postgreshelper.migrations');
 
         // Publishing the views.
         /*$this->publishes([
@@ -78,5 +57,30 @@ class PostgresHelperServiceProvider extends ServiceProvider
 
         // Registering package commands.
         // $this->commands([]);
+    }
+
+    /**
+     * Register any package services.
+     *
+     * @return void
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__ . '/../config/postgreshelper.php', 'postgreshelper');
+
+        // Register the service the package provides.
+        $this->app->singleton('postgreshelper', function ($app) {
+            return new PostgresHelper();
+        });
+    }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
+    public function provides()
+    {
+        return ['postgreshelper'];
     }
 }
