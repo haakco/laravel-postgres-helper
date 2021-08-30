@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HaakCo\PostgresHelper\Libraries;
 
 use Illuminate\Support\Facades\DB;
@@ -9,9 +11,7 @@ class PgHelperLibrary
     public static function removeUpdatedAtFunction(): void
     {
         DB::statement(
-        /**
-         * @lang PostgreSQL
-         */
+            /** @lang POSTGRES-PSQL */
             'DROP FUNCTION IF EXISTS update_updated_at_column'
         );
     }
@@ -19,9 +19,7 @@ class PgHelperLibrary
     public static function addUpdatedAtFunction(): void
     {
         DB::statement(
-        /**
-         * @lang PostgreSQL
-         */
+            /** @lang POSTGRES-PSQL */
             "CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -32,9 +30,6 @@ $$ language 'plpgsql'"
         );
     }
 
-    /**
-     *
-     */
     public static function addMissingUpdatedAtTriggers(): void
     {
         $sql = "SELECT
@@ -60,46 +55,39 @@ ORDER BY
         }
     }
 
-    public static function setUpdatedAtTrigger($tableName): void
+    public static function setUpdatedAtTrigger(string $tableName): void
     {
         $tableNameParts = explode('.', $tableName);
         $name = $tableNameParts[1] ?? $tableName;
 
         DB::statement(
-        /**
-         * @lang PostgreSQL
-         */
-            "DROP TRIGGER IF EXISTS ${name}_before_update_updated_at ON ${tableName}"
+        /** @lang POSTGRES-PSQL */
+            "DROP TRIGGER IF EXISTS {$name}_before_update_updated_at ON {$tableName}"
         );
         DB::statement(
-        /**
-         * @lang PostgreSQL
-         */
+        /** @lang POSTGRES-PSQL */
             "CREATE TRIGGER
-            ${name}_before_update_updated_at BEFORE UPDATE ON ${tableName}
+            {$name}_before_update_updated_at BEFORE UPDATE ON {$tableName}
             FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column()"
         );
     }
 
-    /** @noinspection UnknownInspectionInspection */
-
+    /**
+     * @noinspection UnknownInspectionInspection
+     */
     public static function setSequenceStart(string $tableName, ?int $startNo = null): void
     {
-        if ($startNo === null) {
+        if (null === $startNo) {
             /** @noinspection SqlResolve */
-            $newIdResult = DB::selectOne(
-                "SELECT
+            $newIdResult = DB::selectOne("SELECT
   COALESCE(MAX(t.id) + 1, 1) AS next_id
 FROM
-  ${tableName} t"
-            );
+  {$tableName} t");
 
             $startNo = $newIdResult->next_id;
         }
-        DB::insert(
-            "SELECT setval('${tableName}_id_seq',
-              ${startNo},
-              TRUE);"
-        );
+        DB::insert("SELECT setval('{$tableName}_id_seq',
+              {$startNo},
+              TRUE);");
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HaakCo\PostgresHelper;
 
 use Illuminate\Support\ServiceProvider;
@@ -8,14 +10,12 @@ class PostgresHelperServiceProvider extends ServiceProvider
 {
     /**
      * Perform post-registration booting of services.
-     *
-     * @return void
      */
     public function boot(): void
     {
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'haakco');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'haakco');
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
 
         // Publishing is only necessary when using the CLI.
@@ -25,19 +25,40 @@ class PostgresHelperServiceProvider extends ServiceProvider
     }
 
     /**
-     * Console-specific booting.
+     * Register any package services.
+     */
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../config/postgreshelper.php', 'postgreshelper');
+
+        // Register the service the package provides.
+        $this->app->singleton('postgreshelper', function ($app) {
+            return new PostgresHelper();
+        });
+    }
+
+    /**
+     * Get the services provided by the provider.
      *
-     * @return void
+     * @return array
+     */
+    public function provides()
+    {
+        return ['postgreshelper'];
+    }
+
+    /**
+     * Console-specific booting.
      */
     protected function bootForConsole(): void
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__ . '/../config/postgreshelper.php' => config_path('postgreshelper.php'),
+            __DIR__.'/../config/postgreshelper.php' => config_path('postgreshelper.php'),
         ], 'postgreshelper.config');
 
         $this->publishes([
-            __DIR__ . '/../database/migrations/' => database_path('migrations')
+            __DIR__.'/../database/migrations/' => database_path('migrations'),
         ], 'postgreshelper.migrations');
 
         // Publishing the views.
@@ -57,30 +78,5 @@ class PostgresHelperServiceProvider extends ServiceProvider
 
         // Registering package commands.
         // $this->commands([]);
-    }
-
-    /**
-     * Register any package services.
-     *
-     * @return void
-     */
-    public function register(): void
-    {
-        $this->mergeConfigFrom(__DIR__ . '/../config/postgreshelper.php', 'postgreshelper');
-
-        // Register the service the package provides.
-        $this->app->singleton('postgreshelper', function ($app) {
-            return new PostgresHelper();
-        });
-    }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array
-     */
-    public function provides()
-    {
-        return ['postgreshelper'];
     }
 }

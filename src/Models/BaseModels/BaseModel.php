@@ -1,20 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace HaakCo\PostgresHelper\Models\BaseModels;
 
+use Barryvdh\LaravelIdeHelper\Eloquent;
 use DateTimeInterface;
-use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * App\Models\BaseModels\BaseModel
+ * HaakCo\LocationManager\Models\BaseModels\BaseModel.
  *
  * @method static Builder|BaseModel newModelQuery()
  * @method static Builder|BaseModel newQuery()
  * @method static Builder|BaseModel query()
  * @mixin Eloquent
- * @mixin IdeHelperBaseModel
  */
 class BaseModel extends Model
 {
@@ -23,19 +24,17 @@ class BaseModel extends Model
      *
      * @var string
      */
-    protected $dateFormat = DateTimeInterface::ATOM;
+    protected string $dateFormat = DateTimeInterface::ATOM;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $guarded = [];
+    protected array $guarded = [];
 
     /**
      * The "booted" method of the model.
-     *
-     * @return void
      */
     protected static function booted(): void
     {
