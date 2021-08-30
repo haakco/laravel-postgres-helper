@@ -24,14 +24,14 @@ class BaseModel extends Model
      *
      * @var string
      */
-    protected string $dateFormat = DateTimeInterface::ATOM;
+    protected $dateFormat = DateTimeInterface::ATOM;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected array $guarded = [];
+    protected $guarded = [];
 
     /**
      * The "booted" method of the model.
