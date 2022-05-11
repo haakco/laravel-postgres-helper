@@ -1,12 +1,11 @@
 {
   "name": "haakco/laravel-postgres-helper",
   "description": ":package_description",
+  "license": "proprietary",
   "keywords": [
     "Laravel",
     "PostgresHelper"
   ],
-  "homepage": "https://github.com/haakco/laravel-postgres-helper",
-  "license": "proprietary",
   "authors": [
     {
       "name": "Tim Haak",
@@ -14,32 +13,23 @@
       "homepage": "https://haak.co"
     }
   ],
+  "homepage": "https://github.com/haakco/laravel-postgres-helper",
   "require": {
-    "illuminate/support": "~7 || ~8"
+    "illuminate/support": "~7|~8|~9|~10"
   },
   "require-dev": {
-    "brainmaestro/composer-git-hooks": "^2.8",
-    "doctrine/dbal": "^2.13.2",
-    "ergebnis/composer-normalize": "^2.15",
-    "orchestra/testbench": "~5 || ~6",
-    "phpstan/phpstan": "^0.12.96",
-    "phpstan/phpstan-phpunit": "^0.12.22",
-    "phpunit/phpunit": "~9.0",
-    "psalm/plugin-laravel": "^1.5",
+    "brainmaestro/composer-git-hooks": ">=2.8",
+    "doctrine/dbal": ">=2.13",
+    "ergebnis/composer-normalize": ">=2.15",
+    "orchestra/testbench": "~5|~6|~7|~8|~9|~10",
     "roave/security-advisories": "dev-latest",
-    "squizlabs/php_codesniffer": "^3.6",
-    "symplify/easy-coding-standard": "^9.4",
-    "symplify/phpstan-extensions": "^9.4",
-    "vimeo/psalm": "^4.9"
+    "squizlabs/php_codesniffer": ">=3.6",
+    "symplify/easy-coding-standard": ">=9.4"
   },
-  "extra": {
-    "laravel": {
-      "aliases": {
-        "PostgresHelper": "HaakCo\\PostgresHelper\\Facades\\PostgresHelper"
-      },
-      "providers": [
-        "HaakCo\\PostgresHelper\\PostgresHelperServiceProvider"
-      ]
+  "repositories": {
+    "haakco/laravel-postgres-helper": {
+      "type": "vcs",
+      "url": "git@github.com:haakco/laravel-postgres-helper.git"
     }
   },
   "autoload": {
@@ -52,10 +42,19 @@
       "HaakCo\\PostgresHelper\\Tests\\": "tests"
     }
   },
-  "repositories": {
-    "haakco/laravel-postgres-helper": {
-      "type": "vcs",
-      "url": "git@github.com:haakco/laravel-postgres-helper.git"
+  "config": {
+    "allow-plugins": {
+      "ergebnis/composer-normalize": true
+    }
+  },
+  "extra": {
+    "laravel": {
+      "aliases": {
+        "PostgresHelper": "HaakCo\\PostgresHelper\\Facades\\PostgresHelper"
+      },
+      "providers": [
+        "HaakCo\\PostgresHelper\\PostgresHelperServiceProvider"
+      ]
     }
   },
   "scripts": {
