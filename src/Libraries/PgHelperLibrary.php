@@ -33,22 +33,23 @@ $$ language 'plpgsql'"
     public static function addMissingUpdatedAtTriggers(): void
     {
         $sql = "SELECT
-    t.table_schema || '.' || t.table_name as name
+  t.table_schema || '.' || t.table_name AS name
 FROM
-    information_schema.tables t
-        JOIN information_schema.columns c
-             ON t.table_name = c.table_name
-                 AND t.table_schema = c.table_schema
-                 AND c.column_name = 'updated_at'
-        LEFT JOIN information_schema.triggers tr
-                  ON t.table_schema = tr.trigger_schema
-                      AND t.table_name = tr.event_object_table
-                      AND tr.action_statement = 'EXECUTE FUNCTION update_updated_at_column()'
+  information_schema.tables t
+    JOIN information_schema.columns c
+         ON t.table_name = c.table_name
+           AND t.table_schema = c.table_schema
+           AND c.column_name = 'updated_at'
+    LEFT JOIN information_schema.triggers tr
+              ON t.table_schema = tr.trigger_schema
+                AND t.table_name = tr.event_object_table
+                AND tr.action_statement = 'EXECUTE FUNCTION update_updated_at_column()'
 WHERE
-    tr.event_object_table IS NULL
+  tr.event_object_table IS NOT NULL
+  AND t.table_type = 'BASE TABLE'
 ORDER BY
-    t.table_schema,
-    t.table_name";
+  t.table_schema,
+  t.table_name";
         $tables = DB::select($sql);
         foreach ($tables as $table) {
             self::setUpdatedAtTrigger($table->name);
