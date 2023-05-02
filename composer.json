@@ -1,7 +1,7 @@
 {
   "name": "haakco/laravel-postgres-helper",
-  "description": ":package_description",
-  "license": "proprietary",
+  "description": "Helper functions for postgres in Laravel",
+  "license": "MIT",
   "keywords": [
     "Laravel",
     "PostgresHelper"
