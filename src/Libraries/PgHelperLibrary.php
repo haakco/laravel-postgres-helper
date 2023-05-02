@@ -62,11 +62,11 @@ ORDER BY
         $name = $tableNameParts[1] ?? $tableName;
 
         DB::statement(
-        /** @lang POSTGRES-PSQL */
+            /** @lang POSTGRES-PSQL */
             "DROP TRIGGER IF EXISTS {$name}_before_update_updated_at ON {$tableName}"
         );
         DB::statement(
-        /** @lang POSTGRES-PSQL */
+            /** @lang POSTGRES-PSQL */
             "CREATE TRIGGER
             {$name}_before_update_updated_at BEFORE UPDATE ON {$tableName}
             FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column()"

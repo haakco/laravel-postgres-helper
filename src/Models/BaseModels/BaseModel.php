@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static BaseModel|$this findOrFail(int $id)
  * @method static BaseModel|$this|null find(int $id)
  * @method static void truncate()
+ *
  * @mixin Eloquent
  */
 class BaseModel extends Model

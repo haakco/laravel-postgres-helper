@@ -5,7 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 class HaakLaravelPostgresHelperAddUuidExtensionToPostgresql extends Migration
 {
-
     public function up()
     {
         DB::statement('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');

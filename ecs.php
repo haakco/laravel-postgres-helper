@@ -31,12 +31,12 @@ return static function (ContainerConfigurator $containerConfigurator): void {
 
     // alternative to CLI arguments, easier to maintain and extend
     $parameters->set(Option::PATHS, [
-        __DIR__ . '/app',
-        __DIR__ . '/tests',
-        __DIR__ . '/database',
-        __DIR__ . '/routes',
-        __DIR__ . '/config',
-        __DIR__ . '/ecs.php',
+        __DIR__.'/app',
+        __DIR__.'/tests',
+        __DIR__.'/database',
+        __DIR__.'/routes',
+        __DIR__.'/config',
+        __DIR__.'/ecs.php',
     ]);
     $parameters->set(Option::INDENTATION, 'spaces');
     $parameters->set(Option::LINE_ENDING, "\n");

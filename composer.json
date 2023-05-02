@@ -15,23 +15,19 @@
   ],
   "homepage": "https://github.com/haakco/laravel-postgres-helper",
   "require": {
+    "php": ">=8.0",
     "illuminate/support": "~7 || ~8 || ~9 || ~10 || ~11 || ~12"
   },
   "require-dev": {
     "brainmaestro/composer-git-hooks": ">=2.8",
     "doctrine/dbal": ">=3.3",
     "ergebnis/composer-normalize": ">=2.15",
+    "laravel/pint": "^1.10",
     "orchestra/testbench": "~5 || ~6 || ~7 || ~8 || ~9 || ~10 || ~11 || ~12",
     "roave/security-advisories": "dev-latest",
-    "squizlabs/php_codesniffer": ">=3.6",
-    "symplify/easy-coding-standard": ">=10.2"
+    "squizlabs/php_codesniffer": ">=3.6"
   },
-  "repositories": {
-    "haakco/laravel-postgres-helper": {
-      "type": "vcs",
-      "url": "git@github.com:haakco/laravel-postgres-helper.git"
-    }
-  },
+  "repositories": {},
   "autoload": {
     "psr-4": {
       "HaakCo\\PostgresHelper\\": "src/"
@@ -48,13 +44,13 @@
     }
   },
   "extra": {
-    "laravel": {
-      "aliases": {
-        "PostgresHelper": "HaakCo\\PostgresHelper\\Facades\\PostgresHelper"
-      },
-      "providers": [
-        "HaakCo\\PostgresHelper\\PostgresHelperServiceProvider"
-      ]
+    "hooks": {
+      "post-merge": "composer install",
+      "pre-commit": [
+        "echo committing as $(git config user.name)",
+        "./vendor/bin/pint"
+      ],
+      "pre-push": []
     }
   },
   "scripts": {
