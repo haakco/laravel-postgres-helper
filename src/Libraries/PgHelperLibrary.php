@@ -76,9 +76,9 @@ ORDER BY
     /**
      * @noinspection UnknownInspectionInspection
      */
-    public static function setSequenceStart(string $tableName, ?int $startNo = null): void
+    public static function setSequenceStart(string $tableName, int $startNo = null): void
     {
-        if (null === $startNo) {
+        if ($startNo === null) {
             /** @noinspection SqlResolve */
             $newIdResult = DB::selectOne("SELECT
   COALESCE(MAX(t.id) + 1, 1) AS next_id
