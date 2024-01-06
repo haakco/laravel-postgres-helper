@@ -76,7 +76,7 @@ ORDER BY
     /**
      * @noinspection UnknownInspectionInspection
      */
-    public static function setSequenceStart(string $tableName, int $startNo = null): void
+    public static function setSequenceStart(string $tableName, ?int $startNo = null): void
     {
         if ($startNo === null) {
             /** @noinspection SqlResolve */
