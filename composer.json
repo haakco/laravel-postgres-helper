@@ -53,6 +53,14 @@
         "./vendor/bin/pint"
       ],
       "pre-push": []
+    },
+    "laravel": {
+      "aliases": {
+        "PostgresHelper": "HaakCo\\PostgresHelper\\Facades\\PostgresHelper"
+      },
+      "providers": [
+        "HaakCo\\PostgresHelper\\PostgresHelperServiceProvider"
+      ]
     }
   },
   "scripts": {
@@ -64,6 +72,11 @@
       "Illuminate\\Foundation\\ComposerScripts::postUpdate",
       "vendor/bin/cghooks update",
       "composer normalize"
+    ],
+    "pre-commit": [
+      "echo committing as $(git config user.name)",
+      "./vendor/bin/pint",
+      "composer lint"
     ],
     "cghooks": "vendor/bin/cghooks",
     "fix-code-format": [
