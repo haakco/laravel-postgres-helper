@@ -8,87 +8,69 @@ use Illuminate\Support\Facades\DB;
 
 class PgHelperLibrary
 {
+    /**
+     * @deprecated Use fixAll instead
+     */
     public static function removeUpdatedAtFunction(): void
     {
         DB::statement(
-            /** @lang POSTGRES-PSQL */
-            'DROP FUNCTION IF EXISTS update_updated_at_column'
+            /** @lang POSTGRES-PSQL */ 'DROP FUNCTION IF EXISTS update_updated_at_column'
         );
     }
 
-    public static function addUpdatedAtFunction(): void
+    public static function updateDateColumnsDefault(): void
     {
-        DB::statement(
-            /** @lang POSTGRES-PSQL */
-            "CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-      NEW.updated_at = now();
-      RETURN NEW;
-END;
-$$ language 'plpgsql'"
-        );
+        DB::unprepared(file_get_contents(__DIR__.'/sql/000010_update_date_columns_default.sql'));
     }
 
-    public static function addMissingUpdatedAtTriggers(): void
+    public static function addUpdateUpdatedAtColumn(): void
     {
-        $sql = "SELECT
-  t.table_schema || '.' || t.table_name AS name
-FROM
-  information_schema.tables t
-    JOIN information_schema.columns c
-         ON t.table_name = c.table_name
-           AND t.table_schema = c.table_schema
-           AND c.column_name = 'updated_at'
-    LEFT JOIN information_schema.triggers tr
-              ON t.table_schema = tr.trigger_schema
-                AND t.table_name = tr.event_object_table
-                AND tr.action_statement = 'EXECUTE FUNCTION update_updated_at_column()'
-WHERE
-  tr.event_object_table IS NOT NULL
-  AND t.table_type = 'BASE TABLE'
-ORDER BY
-  t.table_schema,
-  t.table_name";
-        $tables = DB::select($sql);
-        foreach ($tables as $table) {
-            self::setUpdatedAtTrigger($table->name);
-        }
+        DB::unprepared(file_get_contents(__DIR__.'/sql/000020_update_updated_at_column.sql'));
     }
 
-    public static function setUpdatedAtTrigger(string $tableName): void
+    public static function addUpdateUpdatedAtColumnForTables(): void
     {
-        $tableNameParts = explode('.', $tableName);
-        $name = $tableNameParts[1] ?? $tableName;
+        DB::unprepared(file_get_contents(__DIR__.'/sql/000030_updated_at_column_for_tables.sql'));
+    }
 
-        DB::statement(
-            /** @lang POSTGRES-PSQL */
-            "DROP TRIGGER IF EXISTS {$name}_before_update_updated_at ON {$tableName}"
-        );
-        DB::statement(
-            /** @lang POSTGRES-PSQL */
-            "CREATE TRIGGER
-            {$name}_before_update_updated_at BEFORE UPDATE ON {$tableName}
-            FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column()"
-        );
+    public static function addFixAllSeq(): void
+    {
+        DB::unprepared(file_get_contents(__DIR__.'/sql/000040_fix_all_seq.sql'));
+    }
+
+    public static function addFixDb(): void
+    {
+        DB::unprepared(file_get_contents(__DIR__.'/sql/000050_fix_db.sql'));
+    }
+
+    public static function fixAll(): void
+    {
+        $sql = "select public.fix_db()";
+        DB::update($sql);
     }
 
     /**
-     * @noinspection UnknownInspectionInspection
+     * @deprecated Use fixAll instead
+     */
+    public static function addMissingUpdatedAtTriggers(): void
+    {
+        self::fixAll();
+    }
+
+    /**
+     * @deprecated Use fixAll instead
+     */
+    public static function setUpdatedAtTrigger(string $tableName): void
+    {
+
+        self::fixAll();
+    }
+
+    /**
+     * @deprecated Use fixAll instead
      */
     public static function setSequenceStart(string $tableName, ?int $startNo = null): void
     {
-        if ($startNo === null) {
-            /** @noinspection SqlResolve */
-            $newIdResult = DB::selectOne("SELECT
-  COALESCE(MAX(t.id) + 1, 1) AS next_id
-FROM
-  {$tableName} t");
-
-            $startNo = $newIdResult->next_id;
-        }
-        DB::insert("SELECT setval('{$tableName}_id_seq',
-              {$startNo},
-              TRUE);");
+        self::fixAll();
     }
 }

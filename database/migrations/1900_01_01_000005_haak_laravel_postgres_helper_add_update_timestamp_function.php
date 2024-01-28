@@ -7,11 +7,9 @@ class HaakLaravelPostgresHelperAddUpdateTimestampFunction extends Migration
 {
     public function up()
     {
-        PgHelperLibrary::addUpdatedAtFunction();
     }
 
     public function down()
     {
-        PgHelperLibrary::removeUpdatedAtFunction();
     }
 }
