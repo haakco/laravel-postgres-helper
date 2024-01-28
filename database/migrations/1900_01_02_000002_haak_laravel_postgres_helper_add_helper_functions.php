@@ -13,7 +13,6 @@ return new class() extends Migration
         PgHelperLibrary::addFixAllSeq();
         PgHelperLibrary::addFixDb();
         PgHelperLibrary::fixAll();
-        PgHelperLibrary::removeUpdatedAtFunction();
     }
 
     public function down()
