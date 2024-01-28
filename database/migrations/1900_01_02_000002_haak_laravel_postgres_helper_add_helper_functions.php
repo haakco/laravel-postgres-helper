@@ -3,7 +3,7 @@
 use HaakCo\PostgresHelper\Libraries\PgHelperLibrary;
 use Illuminate\Database\Migrations\Migration;
 
-class HaakLaravelPostgresHelperAddUpdateTimestampFunction extends Migration
+return new class() extends Migration
 {
     public function up()
     {
@@ -19,4 +19,4 @@ class HaakLaravelPostgresHelperAddUpdateTimestampFunction extends Migration
     public function down()
     {
     }
-}
+};
