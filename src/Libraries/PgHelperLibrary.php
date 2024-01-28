@@ -45,7 +45,7 @@ class PgHelperLibrary
 
     public static function fixAll(): void
     {
-        $sql = "select public.fix_db()";
+        $sql = 'select public.fix_db()';
         DB::update($sql);
     }
 
