@@ -19,7 +19,6 @@ else
   PATCH=$(echo "$CURRENT_MAX_VERSION" | sed -e "s#$RE#\3#")
 
   ((PATCH+=1))
-  PATCH
 fi
 
 export CURRENT_MAX_VERSION
@@ -33,6 +32,9 @@ export NEW_VERSION
 NEW_VERSION_PREFIX="v$MAJOR.$MINOR.$PATCH"
 export NEW_VERSION_PREFIX
 
+
+echo "Setting tag from: ${CURRENT_MAX_VERSION} to ${NEW_VERSION_PREFIX}"
+echo ""
 echo "Pushing tags to make sure its clean"
 echo ""
 git pull --all
