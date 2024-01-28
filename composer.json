@@ -16,15 +16,15 @@
   "homepage": "https://github.com/haakco/laravel-postgres-helper",
   "require": {
     "php": ">=8.0",
-    "illuminate/database": "^9 || ^10 || ^11 || ^12",
-    "illuminate/support": "^9 || ^10 || ^11 || ^12"
+    "illuminate/database": ">=8",
+    "illuminate/support": ">=8"
   },
   "require-dev": {
-    "barryvdh/laravel-ide-helper": ">=2.13",
+    "barryvdh/laravel-ide-helper": ">=2",
     "brainmaestro/composer-git-hooks": ">=3",
-    "doctrine/dbal": ">=3.3",
-    "ergebnis/composer-normalize": ">=2.15",
-    "laravel/pint": ">=1.10",
+    "doctrine/dbal": ">=3",
+    "ergebnis/composer-normalize": ">=2",
+    "laravel/pint": ">=1",
     "roave/security-advisories": "dev-latest"
   },
   "repositories": {},
