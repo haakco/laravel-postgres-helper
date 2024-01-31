@@ -8,7 +8,7 @@ return new class() extends Migration
     public function up()
     {
         PgHelperLibrary::updateDateColumnsDefault();
-        PgHelperLibrary::addUpdateUpdatedAtColumnForTables();
+        PgHelperLibrary::addUpdateUpdatedAtColumn();
         PgHelperLibrary::addUpdateUpdatedAtColumnForTables();
         PgHelperLibrary::addFixAllSeq();
         PgHelperLibrary::addFixDb();
