@@ -10,7 +10,7 @@ BEGIN
     SELECT
       'SELECT SETVAL(' ||
         QUOTE_LITERAL(QUOTE_IDENT(pgt.schemaname) || '.' || QUOTE_IDENT(s.relname)) ||
-        ', GREATEST(COALESCE(MAX(' || QUOTE_IDENT(c.attname) || '), 1),1)) FROM ' ||
+        ', COALESCE(MAX(' || QUOTE_IDENT(c.attname) || ') + 1, 1),FALSE) FROM ' ||
         QUOTE_IDENT(pgt.schemaname) || '.' || QUOTE_IDENT(t.relname) || ';' AS fix_seq
     FROM
       pg_class AS s,
