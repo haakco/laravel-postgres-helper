@@ -3,7 +3,7 @@
 use HaakCo\PostgresHelper\Libraries\PgHelperLibrary;
 use Illuminate\Database\Migrations\Migration;
 
-return new class() extends Migration
+return new class extends Migration
 {
     public function up()
     {
@@ -15,7 +15,5 @@ return new class() extends Migration
         PgHelperLibrary::fixAll();
     }
 
-    public function down()
-    {
-    }
+    public function down() {}
 };

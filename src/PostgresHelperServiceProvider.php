@@ -33,7 +33,7 @@ class PostgresHelperServiceProvider extends ServiceProvider
 
         // Register the service the package provides.
         $this->app->singleton('postgreshelper', function ($app) {
-            return new PostgresHelper();
+            return new PostgresHelper;
         });
     }
 
