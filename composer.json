@@ -73,11 +73,6 @@
       "vendor/bin/cghooks update",
       "composer normalize"
     ],
-    "pre-commit": [
-      "echo committing as $(git config user.name)",
-      "./vendor/bin/pint",
-      "composer lint"
-    ],
     "cghooks": "vendor/bin/cghooks",
     "fix-code-format": [
       "./vendor/bin/phpcbf || true"
@@ -95,6 +90,11 @@
       "@php vendor/bin/ecs check --fix --no-interaction"
     ],
     "phpstan": "@php vendor/bin/phpstan analyse --no-interaction --memory-limit 1G",
+    "pre-commit": [
+      "echo committing as $(git config user.name)",
+      "./vendor/bin/pint",
+      "composer lint"
+    ],
     "psalm": "@php vendor/bin/psalm --show-info=false",
     "style-check": [
       "./vendor/bin/phpcs"
