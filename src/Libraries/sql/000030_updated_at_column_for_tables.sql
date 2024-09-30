@@ -21,6 +21,7 @@ BEGIN
         AND tr.action_statement = 'EXECUTE FUNCTION update_updated_at_column()'
     WHERE
       tr.event_object_table IS NULL
+      AND t.table_type = 'BASE TABLE'
     ORDER BY
       t.table_schema,
       t.table_name
