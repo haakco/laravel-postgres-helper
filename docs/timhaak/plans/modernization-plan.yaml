@@ -1,0 +1,444 @@
+# Laravel PostgreSQL Helper Modernization Plan
+# Comprehensive upgrade to modern HaakCo standards with enhanced capabilities
+
+plan_overview:
+  project: laravel-postgres-helper
+  priority: HIGH
+  timeline: 4 weeks
+  team_size: 1-2 developers
+  risk_level: MEDIUM (critical infrastructure package)
+  
+project_context:
+  current_state:
+    package_name: "haakco/laravel-postgres-helper"
+    current_version: "3.0+"
+    php_version: ">=8.0" (outdated)
+    laravel_version: ">=8" (outdated)
+    usage_scope: "15+ HaakCo packages, 3+ client projects"
+    
+  critical_functionality:
+    sequence_management: "Fixes PostgreSQL sequences after explicit ID inserts"
+    trigger_automation: "Manages updated_at column triggers"
+    schema_utilities: "Sets proper defaults for timestamp columns"
+    
+  upgrade_rationale:
+    modernization: "Bring to current HaakCo standards"
+    enhanced_features: "Add selective operations and monitoring"
+    validation_system: "Implement table structure validation"
+    event_triggers: "Automatic standards application"
+    
+phase_1_foundation:
+  name: "Dependencies and Standards Modernization"
+  duration: "Week 1"
+  priority: CRITICAL
+  
+  dependency_updates:
+    composer_json:
+      require:
+        php: ">=8.3"
+        illuminate/database: "^10.0|^11.0|^12.0"
+        illuminate/support: "^10.0|^11.0|^12.0"
+        
+      require_dev:
+        larastan/larastan: "^2.0"
+        laravel/pint: "^1.0"
+        orchestra/testbench: "^8.0|^9.0|^10.0"
+        phpunit/phpunit: "^10.0|^11.0"
+        roave/security-advisories: "dev-latest"
+        
+    remove_dependencies:
+      - "barryvdh/laravel-ide-helper"
+      - "brainmaestro/composer-git-hooks"
+      - "ergebnis/composer-normalize"
+      - "ecs/easy-coding-standard"
+      
+  standardize_commands:
+    scripts:
+      lint: ["@pint", "@phpstan"]
+      test: "phpunit"
+      fix-all: ["@pint", "@test"]
+      pint: "./vendor/bin/pint"
+      phpstan: "./vendor/bin/phpstan analyse"
+      
+  linting_configuration:
+    pint_json:
+      preset: "laravel"
+      rules:
+        binary_operator_spaces: true
+        blank_line_after_namespace: true
+        blank_line_after_opening_tag: true
+        
+    phpstan_neon:
+      includes:
+        - "vendor/larastan/larastan/extension.neon"
+      parameters:
+        paths: ["src", "tests"]
+        level: 8
+        checkGenericClassInNonGenericObjectType: false
+        
+  github_actions:
+    workflow_file: ".github/workflows/tests.yml"
+    matrix_testing:
+      php: ["8.3", "8.4"]
+      laravel: ["10.*", "11.*", "12.*"]
+      postgres: ["13", "14", "15", "16"]
+      
+  act_validation:
+    script_location: "scripts/validate-act-tests.sh"
+    template: "Laravel package with PostgreSQL"
+    
+  deliverables:
+    - "Updated composer.json with modern dependencies"
+    - "Standardized linting configuration"
+    - "GitHub Actions workflow with matrix testing"
+    - "ACT validation script"
+    - "Remove deprecated tools and configs"
+    
+phase_2_core_enhancements:
+  name: "Enhanced Functionality and Selective Operations"
+  duration: "Week 2"
+  priority: HIGH
+  
+  enhanced_pghelper_library:
+    new_methods:
+      fixSequences:
+        signature: "public static function fixSequences(?array $tables = null): array"
+        purpose: "Fix sequences for specific tables only"
+        returns: "['sequences_fixed' => [...], 'time_taken' => 0.123]"
+        
+      fixTriggers:
+        signature: "public static function fixTriggers(?array $tables = null): array"
+        purpose: "Fix updated_at triggers for specific tables"
+        returns: "['triggers_created' => [...], 'triggers_skipped' => [...]]"
+        
+      validateStructure:
+        signature: "public static function validateStructure(?array $tables = null): array"
+        purpose: "Validate table structure against config rules"
+        returns: "['valid' => [...], 'errors' => [...]]"
+        
+      runHealthCheck:
+        signature: "public static function runHealthCheck(): array"
+        purpose: "Complete database health audit"
+        returns: "Comprehensive health report"
+        
+      hasStandardsApplied:
+        signature: "public static function hasStandardsApplied(string $table): bool"
+        purpose: "Check if table has standards already applied"
+        
+      applyTableStandards:
+        signature: "public static function applyTableStandards(string $table): void"
+        purpose: "Apply all standards to specific table"
+        
+    performance_monitoring:
+      getLastOperationTime:
+        signature: "public static function getLastOperationTime(): float"
+        purpose: "Get execution time of last operation"
+        
+      getOperationStats:
+        signature: "public static function getOperationStats(): array"
+        purpose: "Get detailed statistics of operations"
+        
+  configuration_system:
+    config_file: "config/postgreshelper.php"
+    structure:
+      auto_standards:
+        enable_event_triggers: "Auto-apply standards on table creation"
+        selective_fixing: "Use selective operations by default"
+        
+      table_validations:
+        wildcard_patterns: "Support *_types, permissions*, etc."
+        required_columns: "Columns that must exist"
+        required_indexes: "Indexes that must exist"
+        forbidden_columns: "Columns that should not exist"
+        
+      performance:
+        log_slow_operations: "Log operations over threshold"
+        slow_operation_threshold: "Milliseconds before considered slow"
+        enable_statistics: "Collect detailed operation statistics"
+        
+  error_handling:
+    detailed_reporting:
+      - "Which sequences were fixed and their new values"
+      - "Which triggers were created or skipped"
+      - "Validation errors with specific column/index details"
+      - "Performance metrics for each operation"
+      
+    exception_types:
+      ValidationException: "Table structure validation failures"
+      PerformanceException: "Operations exceeding time limits"
+      ConfigurationException: "Invalid configuration"
+      
+  backward_compatibility:
+    maintain_existing:
+      - "fixAll() continues to work exactly as before"
+      - "All deprecated methods still function (with warnings)"
+      - "Default behavior unchanged unless configured"
+      
+  deliverables:
+    - "Enhanced PgHelperLibrary with selective operations"
+    - "Performance monitoring system"
+    - "Configuration file and system"
+    - "Detailed error reporting"
+    - "Maintained backward compatibility"
+    
+phase_3_advanced_features:
+  name: "Structure Validation and Health Checks"
+  duration: "Week 3"
+  priority: HIGH
+  
+  structure_validation_system:
+    implementation:
+      wildcard_matching: "Support patterns like *_types, user_*"
+      validation_rules:
+        - "Required columns with type checking"
+        - "Required indexes with uniqueness"
+        - "Forbidden columns detection"
+        - "Column type validation"
+        - "Foreign key validation"
+        
+    config_driven_validation:
+      example_config: |
+        'table_validations' => [
+            '*_types' => [
+                'required_columns' => [
+                    'id' => 'bigint',
+                    'name' => 'string',
+                    'description' => 'text|nullable',
+                    'created_at' => 'timestamp',
+                    'updated_at' => 'timestamp'
+                ],
+                'required_indexes' => [
+                    'name_unique' => ['columns' => ['name'], 'unique' => true]
+                ],
+            ],
+            'permissions*' => [
+                'required_columns' => [
+                    'id' => 'bigint',
+                    'name' => 'string',
+                    'slug' => 'string'
+                ],
+                'auto_slug_index' => true
+            ]
+        ]
+        
+  health_check_system:
+    comprehensive_checks:
+      sequence_health:
+        - "Detect sequence gaps"
+        - "Find mismatched sequence values"
+        - "Identify orphaned sequences"
+        
+      trigger_health:
+        - "Find missing updated_at triggers"
+        - "Detect broken trigger functions"
+        - "Identify non-standard trigger implementations"
+        
+      constraint_health:
+        - "Find missing foreign key indexes"
+        - "Detect orphaned records"
+        - "Identify constraint violations"
+        
+      performance_health:
+        - "Large tables without proper indexes"
+        - "Unused indexes consuming space"
+        - "Table bloat detection"
+        
+    reporting_format:
+      summary: "Overall health score and critical issues"
+      detailed_report: "Category-by-category analysis"
+      actionable_items: "Specific fixes with SQL commands"
+      
+  testing_infrastructure:
+    test_categories:
+      unit_tests: "Pure PHP logic testing"
+      integration_tests: "PostgreSQL integration"
+      compatibility_tests: "Laravel version matrix"
+      performance_tests: "Operation timing validation"
+      
+    test_database_setup:
+      multiple_schemas: "Test with different PostgreSQL schemas"
+      large_datasets: "Performance testing with realistic data"
+      edge_cases: "Unusual table structures and constraints"
+      
+    continuous_integration:
+      matrix_dimensions:
+        - "PHP versions: 8.3, 8.4"
+        - "Laravel versions: 10, 11, 12"
+        - "PostgreSQL versions: 13, 14, 15, 16"
+        
+  documentation:
+    user_guides:
+      - "Migration guide from v3 to v4"
+      - "Configuration reference"
+      - "Performance tuning guide"
+      - "Troubleshooting guide"
+      
+    api_documentation:
+      - "All public methods with examples"
+      - "Configuration options explained"
+      - "Error types and handling"
+      
+  deliverables:
+    - "Complete structure validation system"
+    - "Comprehensive health check functionality"
+    - "Full test suite with CI/CD"
+    - "Complete documentation"
+    
+phase_4_event_triggers:
+  name: "Database Event Triggers and Automation"
+  duration: "Week 4"
+  priority: MEDIUM
+  
+  event_trigger_system:
+    ddl_triggers:
+      auto_table_standards:
+        trigger_on: "CREATE TABLE"
+        actions:
+          - "Auto-create updated_at trigger if column exists"
+          - "Set timestamp column defaults"
+          - "Create standard indexes"
+          - "Validate against configured rules"
+          
+    implementation_details:
+      sql_functions:
+        - "auto_apply_table_standards()"
+        - "validate_new_table_structure()"
+        - "create_standard_indexes()"
+        
+      laravel_integration:
+        - "Detect if standards already applied"
+        - "Skip redundant operations"
+        - "Log all automatic actions"
+        
+  advanced_validation:
+    real_time_enforcement:
+      - "Prevent table creation if validation fails"
+      - "Automatic correction of common issues"
+      - "Notification system for violations"
+      
+    validation_modes:
+      strict: "Prevent non-compliant tables"
+      warning: "Allow but log violations"
+      auto_fix: "Automatically correct issues"
+      
+  deployment_strategy:
+    rollout_phases:
+      1. "Deploy to development environments"
+      2. "Test with existing migrations"
+      3. "Gradual production rollout"
+      4. "Monitor for issues"
+      
+    rollback_plan:
+      - "Event triggers can be disabled via config"
+      - "Manual override methods available"
+      - "Complete removal script provided"
+      
+  deliverables:
+    - "Database event trigger system"
+    - "Automatic standards application"
+    - "Advanced validation modes"
+    - "Deployment and rollback procedures"
+    
+implementation_guidelines:
+  development_workflow:
+    1. "Create feature branch from main"
+    2. "Implement phase features with tests"
+    3. "Run full test suite including ACT"
+    4. "Update documentation"
+    5. "Create PR with detailed description"
+    
+  testing_requirements:
+    minimum_coverage: "90% code coverage"
+    test_types:
+      - "Unit tests for all public methods"
+      - "Integration tests with real PostgreSQL"
+      - "Compatibility tests across versions"
+      - "Performance benchmarks"
+      
+  code_quality:
+    - "PHPStan level 8 compliance"
+    - "Laravel Pint formatting"
+    - "Comprehensive PHPDoc blocks"
+    - "Follow HaakCo coding standards"
+    
+  release_process:
+    version_strategy: "Semantic versioning"
+    release_checklist:
+      - "All tests passing"
+      - "Documentation updated"
+      - "CHANGELOG.md updated"
+      - "Migration guide complete"
+      - "Tagged release on GitHub"
+      
+risk_mitigation:
+  backward_compatibility:
+    risk: "Breaking existing implementations"
+    mitigation:
+      - "Extensive testing against real projects"
+      - "Deprecation warnings before removal"
+      - "Clear migration documentation"
+      
+  performance_impact:
+    risk: "Slower operations with new features"
+    mitigation:
+      - "Benchmark all operations"
+      - "Selective operations for performance"
+      - "Caching where appropriate"
+      
+  postgresql_version_compatibility:
+    risk: "Features not working on older PostgreSQL"
+    mitigation:
+      - "Test against PostgreSQL 13-16"
+      - "Graceful degradation for older versions"
+      - "Clear version requirements"
+      
+success_metrics:
+  technical_metrics:
+    - "Zero breaking changes for existing usage"
+    - "< 2 second execution for fixAll() on typical database"
+    - "90%+ test coverage maintained"
+    - "All matrix CI tests passing"
+    
+  adoption_metrics:
+    - "Successful integration in 3+ projects"
+    - "Positive developer feedback"
+    - "Reduced database-related issues"
+    
+  performance_metrics:
+    - "50% faster selective operations vs fixAll()"
+    - "< 100ms for structure validation"
+    - "< 500ms for health checks"
+    
+team_resources:
+  required_skills:
+    - "PHP 8.3+ expertise"
+    - "PostgreSQL stored procedures"
+    - "Laravel package development"
+    - "GitHub Actions CI/CD"
+    
+  time_allocation:
+    lead_developer: "Full time for 4 weeks"
+    code_reviewer: "4 hours per week"
+    tester: "8 hours per week"
+    
+  external_dependencies:
+    - "PostgreSQL 13+ for testing"
+    - "GitHub Actions runners"
+    - "Multiple Laravel versions for testing"
+    
+next_steps:
+  immediate_actions:
+    1. "Review and approve this plan"
+    2. "Create project board on GitHub"
+    3. "Set up development environment"
+    4. "Begin Phase 1 implementation"
+    
+  communication:
+    - "Weekly progress updates"
+    - "Blocker discussions as needed"
+    - "Demo after each phase completion"
+    
+  documentation_requirements:
+    - "Update CLAUDE.md with progress"
+    - "Maintain CHANGELOG.md"
+    - "Create examples for each feature"
