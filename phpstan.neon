@@ -1,6 +1,5 @@
 includes:
-  - vendor/symplify/phpstan-extensions/config/config.neon
-  - vendor/phpstan/phpstan-phpunit/extension.neon
+  - vendor/larastan/larastan/extension.neon
 
 parameters:
   paths:
@@ -10,19 +9,5 @@ parameters:
   # The level 8 is the highest level
   level: 8
 
-  # Larstan recommendation:
-  checkMissingIterableValueType: false
-
-  # Ignore generic class Ds\Map
-  checkGenericClassInNonGenericObjectType: false
-
   ignoreErrors:
-  # buggy
-
-  # mixed
-
-  # cache buggy
-
-  # tests
-
-  # iterable
+    - identifier: missingType.iterableValue

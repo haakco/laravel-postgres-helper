@@ -15,7 +15,7 @@ class PostgresHelperServiceProvider extends ServiceProvider
     {
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'haakco');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'haakco');
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
 
         // Publishing is only necessary when using the CLI.
@@ -27,14 +27,13 @@ class PostgresHelperServiceProvider extends ServiceProvider
     /**
      * Register any package services.
      */
+    #[\Override]
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/postgreshelper.php', 'postgreshelper');
+        $this->mergeConfigFrom(__DIR__ . '/../config/postgreshelper.php', 'postgreshelper');
 
         // Register the service the package provides.
-        $this->app->singleton('postgreshelper', function ($app) {
-            return new PostgresHelper;
-        });
+        $this->app->singleton('postgreshelper', static fn ($app): PostgresHelper => new PostgresHelper());
     }
 
     /**
@@ -42,6 +41,7 @@ class PostgresHelperServiceProvider extends ServiceProvider
      *
      * @return array
      */
+    #[\Override]
     public function provides()
     {
         return ['postgreshelper'];
@@ -54,11 +54,11 @@ class PostgresHelperServiceProvider extends ServiceProvider
     {
         // Publishing the configuration file.
         $this->publishes([
-            __DIR__.'/../config/postgreshelper.php' => config_path('postgreshelper.php'),
+            __DIR__ . '/../config/postgreshelper.php' => config_path('postgreshelper.php'),
         ], 'postgreshelper.config');
 
         $this->publishes([
-            __DIR__.'/../database/migrations/' => database_path('migrations'),
+            __DIR__ . '/../database/migrations/' => database_path('migrations'),
         ], 'postgreshelper.migrations');
 
         // Publishing the views.

@@ -15,14 +15,17 @@ current_todo_list:
           - "Update PHP requirement to >=8.3"
           - "Update Laravel requirements to 10|11|12"
           - "Add larastan/larastan"
-          - "Remove deprecated dependencies"
+          - "Add friendsofphp/php-cs-fixer"
+          - "Add rector/rector"
+          - "Remove deprecated dependencies (laravel/pint)"
           
       - task: "Standardize linting configuration"
         assignee: "team"
         checklist:
-          - "Create pint.json with Laravel preset"
+          - "Create .php-cs-fixer.dist.php with Laravel preset"
+          - "Create rector.php for PHP 8.3+ refactoring"
           - "Update phpstan.neon for Larastan"
-          - "Remove old linting configs"
+          - "Remove old linting configs (pint.json, psalm.xml)"
           - "Run initial lint fixes"
           
       - task: "Set up GitHub Actions"

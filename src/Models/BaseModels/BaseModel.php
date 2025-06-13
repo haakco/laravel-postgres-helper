@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace HaakCo\PostgresHelper\Models\BaseModels;
 
-use Barryvdh\LaravelIdeHelper\Eloquent;
-use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * HaakCo\LocationManager\Models\BaseModels\BaseModel.
+ * HaakCo\PostgresHelper\Models\BaseModels\BaseModel.
  *
  * @method static Builder|BaseModel newModelQuery()
  * @method static Builder|BaseModel newQuery()
@@ -19,8 +17,6 @@ use Illuminate\Database\Eloquent\Model;
  * @method static BaseModel|$this findOrFail(int $id)
  * @method static BaseModel|$this|null find(int $id)
  * @method static void truncate()
- *
- * @mixin Eloquent
  */
 class BaseModel extends Model
 {
@@ -29,18 +25,19 @@ class BaseModel extends Model
      *
      * @var string
      */
-    protected $dateFormat = DateTimeInterface::ATOM;
+    protected $dateFormat = \DateTimeInterface::ATOM;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $guarded = [];
 
     /**
      * The "booted" method of the model.
      */
+    #[\Override]
     protected static function booted(): void
     {
         parent::booted();

@@ -17,7 +17,7 @@ project_status:
       php_version: ">=8.0 (outdated)"
       laravel_support: ">=8 (outdated)"
       test_coverage: "Minimal"
-      linting: "Inconsistent (multiple tools)"
+      linting: "Inconsistent (multiple tools) - migrating to PHP-CS-Fixer + Rector"
       ci_cd: "None"
       
     functionality:
@@ -41,7 +41,7 @@ project_status:
         status: "📋 Ready to implement"
         deliverables:
           - "Modern dependencies (PHP 8.3+, Laravel 10-12)"
-          - "Standardized linting (Pint + Larastan)"
+          - "Standardized linting (PHP-CS-Fixer + Rector + Larastan)"
           - "GitHub Actions CI/CD"
           - "ACT validation script"
           

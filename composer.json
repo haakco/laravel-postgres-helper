@@ -15,16 +15,16 @@
   ],
   "homepage": "https://github.com/haakco/laravel-postgres-helper",
   "require": {
-    "php": ">=8.0",
-    "illuminate/database": ">=8",
-    "illuminate/support": ">=8"
+    "php": ">=8.3",
+    "illuminate/database": "^10.0|^11.0|^12.0",
+    "illuminate/support": "^10.0|^11.0|^12.0"
   },
   "require-dev": {
-    "barryvdh/laravel-ide-helper": ">=2",
-    "brainmaestro/composer-git-hooks": ">=3",
-    "doctrine/dbal": ">=3",
-    "ergebnis/composer-normalize": ">=2",
-    "laravel/pint": ">=1",
+    "larastan/larastan": "^2.0",
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "rector/rector": "^1.0",
+    "orchestra/testbench": "^8.0|^9.0|^10.0",
+    "phpunit/phpunit": "^10.0|^11.0",
     "roave/security-advisories": "dev-latest"
   },
   "repositories": {},
@@ -46,14 +46,6 @@
     }
   },
   "extra": {
-    "hooks": {
-      "post-merge": "composer install",
-      "pre-commit": [
-        "echo committing as $(git config user.name)",
-        "./vendor/bin/pint"
-      ],
-      "pre-push": []
-    },
     "laravel": {
       "aliases": {
         "PostgresHelper": "HaakCo\\PostgresHelper\\Facades\\PostgresHelper"
@@ -64,40 +56,18 @@
     }
   },
   "scripts": {
-    "post-install-cmd": [
-      "Illuminate\\Foundation\\ComposerScripts::postInstall",
-      "vendor/bin/cghooks add --ignore-lock"
+    "lint": [
+      "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --verbose",
+      "vendor/bin/rector process --no-diffs",
+      "vendor/bin/phpstan analyse --no-progress"
     ],
-    "post-update-cmd": [
-      "Illuminate\\Foundation\\ComposerScripts::postUpdate",
-      "vendor/bin/cghooks update",
-      "composer normalize"
+    "lint-check": [
+      "vendor/bin/phpstan analyse --no-progress",
+      "vendor/bin/rector process --dry-run"
     ],
-    "cghooks": "vendor/bin/cghooks",
-    "fix-code-format": [
-      "./vendor/bin/phpcbf || true"
-    ],
-    "phpcs": [
-      "@php vendor/bin/ecs check --no-interaction",
-      "@php vendor/bin/ecs check --fix --no-interaction"
-    ],
-    "phpcs-check": [
-      "@php vendor/bin/ecs check --no-interaction"
-    ],
-    "phpcs-no-cache": [
-      "@php vendor/bin/ecs check --clear-cache --no-interaction",
-      "@php vendor/bin/ecs check --no-interaction",
-      "@php vendor/bin/ecs check --fix --no-interaction"
-    ],
-    "phpstan": "@php vendor/bin/phpstan analyse --no-interaction --memory-limit 1G",
-    "pre-commit": [
-      "echo committing as $(git config user.name)",
-      "./vendor/bin/pint",
-      "composer lint"
-    ],
-    "psalm": "@php vendor/bin/psalm --show-info=false",
-    "style-check": [
-      "./vendor/bin/phpcs"
-    ]
+    "test": "vendor/bin/phpunit",
+    "format": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --verbose",
+    "rector": "vendor/bin/rector process --no-diffs",
+    "phpstan": "vendor/bin/phpstan analyse --no-progress"
   }
 }

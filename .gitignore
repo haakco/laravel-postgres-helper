@@ -19,6 +19,9 @@
 .env
 .env.backup
 .phpunit.result.cache
+.phpunit.cache
+.php-cs-fixer.cache
+.rector_cache
 
 /.idea
 /.vscode
