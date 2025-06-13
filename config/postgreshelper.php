@@ -49,16 +49,32 @@ return [
     |
     */
     'table_validations' => [
-        // Example: All tables ending with '_types' should have these columns
-        '*_types' => [
-            'required_columns' => ['id', 'name', 'created_at', 'updated_at'],
-            'required_indexes' => ['name_unique'],
-        ],
+        // Example: Validate all tables ending with '_types'
+        // '*_types' => [
+        //     'required_columns' => ['id', 'name', 'created_at', 'updated_at'],
+        //     'required_indexes' => ['name_unique'],
+        //     'column_types' => [
+        //         'id' => 'bigint',
+        //         'name' => 'text',
+        //         'created_at' => 'timestamp',
+        //         'updated_at' => 'timestamp',
+        //     ],
+        // ],
         
-        // Example: Permission tables
-        'permissions*' => [
-            'required_columns' => ['id', 'name', 'guard_name', 'created_at', 'updated_at'],
-        ],
+        // Example: Specific table validation
+        // 'users' => [
+        //     'required_columns' => ['id', 'email', 'name'],
+        //     'required_constraints' => [
+        //         'users_email_unique' => 'u', // unique constraint
+        //         'users_pkey' => 'p', // primary key
+        //     ],
+        // ],
+        
+        // Example: Wildcard patterns for similar tables
+        // 'audit_*' => [
+        //     'required_columns' => ['id', 'user_id', 'action', 'created_at'],
+        //     'required_indexes' => ['user_id_idx', 'created_at_idx'],
+        // ],
     ],
 
     /*

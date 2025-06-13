@@ -20,6 +20,7 @@ final class SelectiveOperationsTest extends TestCase
 {
     use DatabaseTransactions;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -33,13 +34,13 @@ final class SelectiveOperationsTest extends TestCase
     public function test_fix_sequences_for_specific_tables(): void
     {
         // Create test tables
-        Schema::create('test_users', static function (Blueprint $table) {
+        Schema::create('test_users', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->timestamps();
         });
 
-        Schema::create('test_posts', static function (Blueprint $table) {
+        Schema::create('test_posts', static function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->timestamps();
@@ -78,13 +79,13 @@ final class SelectiveOperationsTest extends TestCase
     public function test_fix_triggers_for_specific_tables(): void
     {
         // Create test tables
-        Schema::create('test_products', static function (Blueprint $table) {
+        Schema::create('test_products', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->timestamps();
         });
 
-        Schema::create('test_categories', static function (Blueprint $table) {
+        Schema::create('test_categories', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->timestamp('created_at');
@@ -116,7 +117,7 @@ final class SelectiveOperationsTest extends TestCase
     public function test_has_standards_applied(): void
     {
         // Create table without standards
-        Schema::create('test_items', static function (Blueprint $table) {
+        Schema::create('test_items', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->timestamps();
@@ -138,7 +139,7 @@ final class SelectiveOperationsTest extends TestCase
     public function test_performance_tracking(): void
     {
         // Create a simple table
-        Schema::create('test_performance', static function (Blueprint $table) {
+        Schema::create('test_performance', static function (Blueprint $table): void {
             $table->id();
             $table->timestamps();
         });
@@ -166,7 +167,7 @@ final class SelectiveOperationsTest extends TestCase
     {
         // Create multiple tables
         for ($i = 1; $i <= 5; $i++) {
-            Schema::create("test_table_{$i}", static function (Blueprint $table) {
+            Schema::create("test_table_{$i}", static function (Blueprint $table): void {
                 $table->id();
                 $table->timestamps();
             });
