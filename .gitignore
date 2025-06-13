@@ -18,6 +18,7 @@
 
 .env
 .env.backup
+.env.testing
 .phpunit.result.cache
 .phpunit.cache
 .php-cs-fixer.cache
