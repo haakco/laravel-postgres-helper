@@ -586,6 +586,221 @@ class PgHelperLibrary
     }
 
     /**
+     * Add the auto-apply standards function (used by event triggers).
+     */
+    public static function addAutoApplyStandards(): void
+    {
+        $sql = file_get_contents(__DIR__ . '/sql/000060_auto_apply_standards.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000060_auto_apply_standards.sql');
+        }
+        DB::unprepared($sql);
+    }
+
+    /**
+     * Enable event triggers to automatically apply standards to new tables.
+     *
+     * @param bool $enable Whether to enable or disable event triggers
+     *
+     * @return array{enabled: bool, message: string}
+     */
+    public static function enableEventTriggers(bool $enable = true): array
+    {
+        $startTime = microtime(true);
+
+        try {
+            if ($enable) {
+                // Ensure functions exist
+                self::addAutoApplyStandards();
+
+                // Create the event trigger
+                DB::statement("
+                    CREATE EVENT TRIGGER auto_apply_standards_trigger
+                    ON ddl_command_end
+                    WHEN TAG IN ('CREATE TABLE')
+                    EXECUTE FUNCTION auto_apply_table_standards()
+                ");
+
+                $message = 'Event triggers enabled - standards will be automatically applied to new tables';
+            } else {
+                // Drop the event trigger
+                DB::statement('DROP EVENT TRIGGER IF EXISTS auto_apply_standards_trigger');
+                $message = 'Event triggers disabled';
+            }
+
+            self::recordOperationTime($startTime, 'enableEventTriggers', ['enabled' => $enable]);
+
+            return [
+                'enabled' => $enable,
+                'message' => $message,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to configure event triggers', [
+                'error' => $e->getMessage(),
+                'enable' => $enable,
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Check if event triggers are currently enabled.
+     */
+    public static function areEventTriggersEnabled(): bool
+    {
+        $result = DB::selectOne("
+            SELECT 1 FROM pg_event_trigger
+            WHERE evtname = 'auto_apply_standards_trigger'
+            AND evtenabled != 'D'
+        ");
+
+        return null !== $result;
+    }
+
+    /**
+     * Apply PostgreSQL best practices to a list of tables or all tables.
+     *
+     * @param array<string>|null $tables Table names to process, or null for all tables
+     * @param bool $dryRun If true, only report what would be done without making changes
+     *
+     * @return array{tables_processed: int, sequences_fixed: array<string>, triggers_created: array<string>, dry_run: bool}
+     */
+    public static function applyBestPractices(?array $tables = null, bool $dryRun = false): array
+    {
+        $startTime = microtime(true);
+        $tablesProcessed = 0;
+        $allSequencesFixed = [];
+        $allTriggersCreated = [];
+
+        if (null === $tables) {
+            // Get all user tables
+            $sql = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'";
+            $tables = DB::select($sql);
+            $tables = array_map(static fn ($table) => $table->tablename, $tables);
+        }
+
+        foreach ($tables as $table) {
+            $tablesProcessed++;
+
+            if (!$dryRun) {
+                // Fix sequences
+                $seqResult = self::fixSequences([$table]);
+                $allSequencesFixed = array_merge($allSequencesFixed, $seqResult['sequences_fixed']);
+
+                // Fix triggers
+                $trigResult = self::fixTriggers([$table]);
+                $allTriggersCreated = array_merge($allTriggersCreated, $trigResult['triggers_created']);
+            } else {
+                // Dry run - just check what needs to be done
+                $validation = self::validateStructure([$table]);
+
+                foreach ($validation['warnings'] as $tableWarnings) {
+                    foreach ($tableWarnings as $warning) {
+                        if (str_contains($warning, 'Sequence') && str_contains($warning, 'may need to be reset')) {
+                            $allSequencesFixed[] = "{$table} (would fix)";
+                        }
+                        if (str_contains($warning, 'missing update trigger')) {
+                            $allTriggersCreated[] = "{$table} (would create)";
+                        }
+                    }
+                }
+            }
+        }
+
+        self::recordOperationTime($startTime, 'applyBestPractices', [
+            'tables' => $tablesProcessed,
+            'dry_run' => $dryRun,
+        ]);
+
+        return [
+            'tables_processed' => $tablesProcessed,
+            'sequences_fixed' => $allSequencesFixed,
+            'triggers_created' => $allTriggersCreated,
+            'dry_run' => $dryRun,
+        ];
+    }
+
+    /**
+     * Generate a migration that applies PostgreSQL standards to existing tables.
+     *
+     * @param string|null $migrationName Custom migration name
+     *
+     * @return array{path: string, content: string}
+     */
+    public static function generateStandardsMigration(?string $migrationName = null): array
+    {
+        $timestamp = date('Y_m_d_His');
+        $filename = "{$timestamp}_apply_postgresql_standards.php";
+
+        // Get all tables that need standards applied
+        $validation = self::validateStructure();
+        $tablesNeedingStandards = [];
+
+        foreach ($validation['warnings'] as $table => $warnings) {
+            foreach ($warnings as $warning) {
+                if (str_contains($warning, 'missing update trigger')
+                    || str_contains($warning, 'may need to be reset')) {
+                    $tablesNeedingStandards[] = $table;
+
+                    break;
+                }
+            }
+        }
+
+        $tablesJson = json_encode(array_unique($tablesNeedingStandards));
+
+        $content = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+use Illuminate\\Database\\Migrations\\Migration;
+use HaakCo\\PostgresHelper\\Libraries\\PgHelperLibrary;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // Apply PostgreSQL standards to tables that need them
+        \$tables = {$tablesJson};
+
+        if (!empty(\$tables)) {
+            echo "Applying PostgreSQL standards to " . count(\$tables) . " tables...\n";
+
+            foreach (\$tables as \$table) {
+                PgHelperLibrary::applyTableStandards(\$table);
+                echo "  ✓ Applied standards to {\$table}\n";
+            }
+        } else {
+            echo "All tables already have PostgreSQL standards applied.\n";
+        }
+
+        // Ensure all sequences are properly set
+        PgHelperLibrary::fixAll();
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Standards are best practices and should not be reversed
+        // This migration is intentionally not reversible
+    }
+};
+PHP;
+
+        return [
+            'path' => "database/migrations/{$filename}",
+            'content' => $content,
+        ];
+    }
+
+    /**
      * Check health of all sequences.
      *
      * @return array{status: string, message: string, score: int, details?: array<string, mixed>, recommendation?: string}

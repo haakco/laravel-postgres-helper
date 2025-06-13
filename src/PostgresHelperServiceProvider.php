@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HaakCo\PostgresHelper;
 
+use HaakCo\PostgresHelper\Commands\PostgresHelperCommand;
 use Illuminate\Support\ServiceProvider;
 
 class PostgresHelperServiceProvider extends ServiceProvider
@@ -77,6 +78,8 @@ class PostgresHelperServiceProvider extends ServiceProvider
         ], 'postgreshelper.views');*/
 
         // Registering package commands.
-        // $this->commands([]);
+        $this->commands([
+            PostgresHelperCommand::class,
+        ]);
     }
 }
