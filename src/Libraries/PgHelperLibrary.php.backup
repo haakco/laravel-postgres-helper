@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace HaakCo\PostgresHelper\Libraries;
 
-use HaakCo\PostgresHelper\Libraries\Helpers\HealthChecker;
-use HaakCo\PostgresHelper\Libraries\Helpers\StructureValidator;
-use HaakCo\PostgresHelper\Libraries\Traits\OperationTiming;
-use HaakCo\PostgresHelper\Libraries\Traits\PostgresQueries;
-use HaakCo\PostgresHelper\Libraries\Traits\SqlFileLoader;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +11,12 @@ use Illuminate\Support\Facades\Log;
 
 class PgHelperLibrary
 {
-    use OperationTiming;
-    use PostgresQueries;
-    use SqlFileLoader;
+    protected static ?float $lastOperationTime = null;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected static array $operationStats = [];
 
     /**
      * @deprecated Use fixAll instead
@@ -33,35 +31,57 @@ class PgHelperLibrary
 
     public static function updateDateColumnsDefault(): void
     {
-        self::executeSqlFile('000010_update_date_columns_default.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000010_update_date_columns_default.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000010_update_date_columns_default.sql');
+        }
+        DB::unprepared($sql);
     }
 
     public static function addUpdateUpdatedAtColumn(): void
     {
-        self::executeSqlFile('000020_update_updated_at_column.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000020_update_updated_at_column.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000020_update_updated_at_column.sql');
+        }
+        DB::unprepared($sql);
     }
 
     public static function addUpdateUpdatedAtColumnForTables(): void
     {
-        self::executeSqlFile('000030_updated_at_column_for_tables.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000030_updated_at_column_for_tables.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000030_updated_at_column_for_tables.sql');
+        }
+        DB::unprepared($sql);
     }
 
     public static function addFixAllSeq(): void
     {
-        self::executeSqlFile('000040_fix_all_seq.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000040_fix_all_seq.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000040_fix_all_seq.sql');
+        }
+        DB::unprepared($sql);
     }
 
     public static function addFixDb(): void
     {
-        self::executeSqlFile('000050_fix_db.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000050_fix_db.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000050_fix_db.sql');
+        }
+        DB::unprepared($sql);
     }
 
     public static function fixAll(): void
     {
-        self::withTiming(
-            static fn () => DB::update('select public.fix_db()'),
-            'fixAll'
-        );
+        $startTime = microtime(true);
+
+        $sql = 'select public.fix_db()';
+        DB::update($sql);
+
+        self::recordOperationTime($startTime, 'fixAll');
     }
 
     /**
@@ -97,21 +117,63 @@ class PgHelperLibrary
      */
     public static function fixSequences(?array $tables = null): array
     {
-        return self::withTiming(
-            static function () use ($tables): array {
-                $tablesToFix = $tables ?? self::getUserTables();
-                $sequencesFixed = [];
+        $startTime = microtime(true);
+        $sequencesFixed = [];
 
-                foreach ($tablesToFix as $table) {
-                    $fixed = self::fixTableSequences($table);
-                    $sequencesFixed = array_merge($sequencesFixed, $fixed);
+        if (null === $tables) {
+            // Fix all sequences
+            $sql = "SELECT schemaname, tablename FROM pg_tables
+                    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')";
+            $tables = DB::select($sql);
+            $tables = array_map(static fn ($table) => $table->tablename, $tables);
+        }
+
+        foreach ($tables as $table) {
+            // Check if table exists and has sequences
+            $sequences = DB::select("
+                SELECT seq.relname AS sequence_name
+                FROM pg_class seq
+                JOIN pg_depend dep ON seq.oid = dep.objid
+                JOIN pg_class tbl ON dep.refobjid = tbl.oid
+                WHERE seq.relkind = 'S'
+                AND tbl.relname = ?
+            ", [$table]);
+
+            foreach ($sequences as $sequence) {
+                $sequenceName = $sequence->sequence_name;
+
+                // Get the column name associated with this sequence
+                $columnInfo = DB::selectOne('
+                    SELECT attname AS column_name
+                    FROM pg_attribute
+                    JOIN pg_class ON pg_attribute.attrelid = pg_class.oid
+                    JOIN pg_depend ON pg_depend.refobjid = pg_class.oid
+                    JOIN pg_class seq ON seq.oid = pg_depend.objid
+                    WHERE pg_class.relname = ?
+                    AND seq.relname = ?
+                    AND pg_attribute.attnum = pg_depend.refobjsubid
+                ', [$table, $sequenceName]);
+
+                if ($columnInfo) {
+                    $columnName = $columnInfo->column_name;
+
+                    // Fix the sequence
+                    $maxValueResult = DB::selectOne("SELECT COALESCE(MAX({$columnName}), 0) as max_val FROM {$table}");
+                    $maxValue = $maxValueResult->max_val ?? 0;
+
+                    DB::statement("SELECT setval('{$sequenceName}', GREATEST({$maxValue}, 1), true)");
+                    $sequencesFixed[] = $sequenceName;
                 }
+            }
+        }
 
-                return ['sequences_fixed' => $sequencesFixed];
-            },
-            'fixSequences',
-            ['tables' => \count($tables ?? self::getUserTables())]
-        );
+        $timeTaken = microtime(true) - $startTime;
+        self::recordOperationTime($startTime, 'fixSequences', ['tables' => \count($tables)]);
+
+        return [
+            'sequences_fixed' => $sequencesFixed,
+            'time_taken' => $timeTaken,
+        ];
     }
 
     /**
@@ -123,33 +185,67 @@ class PgHelperLibrary
      */
     public static function fixTriggers(?array $tables = null): array
     {
-        return self::withTiming(
-            static function () use ($tables): array {
-                // Ensure the trigger function exists
-                self::addUpdateUpdatedAtColumn();
+        $startTime = microtime(true);
+        $triggersCreated = [];
+        $triggersSkipped = [];
 
-                $tablesToFix = $tables ?? self::getTablesWithColumn('updated_at');
-                $triggersCreated = [];
-                $triggersSkipped = [];
+        // Ensure the trigger function exists
+        self::addUpdateUpdatedAtColumn();
 
-                foreach ($tablesToFix as $table) {
-                    $result = self::processTableTrigger($table);
+        if (null === $tables) {
+            // Get all tables with updated_at column
+            $sql = "SELECT table_name FROM information_schema.columns
+                    WHERE column_name = 'updated_at'
+                    AND table_schema = 'public'";
+            $tables = DB::select($sql);
+            $tables = array_map(static fn ($table) => $table->table_name, $tables);
+        }
 
-                    if ('created' === $result) {
-                        $triggersCreated[] = $table;
-                    } else {
-                        $triggersSkipped[] = $table;
-                    }
-                }
+        foreach ($tables as $table) {
+            // Check if updated_at column exists
+            $hasUpdatedAt = DB::selectOne("
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = ?
+                AND column_name = 'updated_at'
+                AND table_schema = 'public'
+            ", [$table]);
 
-                return [
-                    'triggers_created' => $triggersCreated,
-                    'triggers_skipped' => $triggersSkipped,
-                ];
-            },
-            'fixTriggers',
-            ['tables' => \count($tables ?? self::getTablesWithColumn('updated_at'))]
-        );
+            if (!$hasUpdatedAt) {
+                $triggersSkipped[] = $table;
+
+                continue;
+            }
+
+            // Check if trigger already exists
+            $triggerExists = DB::selectOne("
+                SELECT 1 FROM information_schema.triggers
+                WHERE trigger_name = ?
+                AND event_object_table = ?
+                AND trigger_schema = 'public'
+            ", ["update_{$table}_updated_at", $table]);
+
+            if (!$triggerExists) {
+                // Create trigger
+                DB::statement("
+                    CREATE TRIGGER update_{$table}_updated_at
+                    BEFORE UPDATE ON {$table}
+                    FOR EACH ROW
+                    EXECUTE PROCEDURE update_updated_at_column()
+                ");
+                $triggersCreated[] = $table;
+            } else {
+                $triggersSkipped[] = $table;
+            }
+        }
+
+        $timeTaken = microtime(true) - $startTime;
+        self::recordOperationTime($startTime, 'fixTriggers', ['tables' => \count($tables)]);
+
+        return [
+            'triggers_created' => $triggersCreated,
+            'triggers_skipped' => $triggersSkipped,
+            'time_taken' => $timeTaken,
+        ];
     }
 
     /**
@@ -248,38 +344,184 @@ class PgHelperLibrary
      */
     public static function validateStructure(?array $tables = null): array
     {
-        return self::withTiming(
-            static function () use ($tables): array {
-                $errors = [];
-                $warnings = [];
-                $tablesToCheck = $tables ?? self::getUserTables();
-                $tablesChecked = 0;
+        $startTime = microtime(true);
+        $errors = [];
+        $warnings = [];
+        $tablesChecked = 0;
 
-                foreach ($tablesToCheck as $table) {
-                    $tablesChecked++;
-                    $tableErrors = [];
-                    $tableWarnings = [];
+        $validationRules = Config::get('postgreshelper.table_validations', []);
 
-                    StructureValidator::validateTable($table, $tableErrors, $tableWarnings);
+        if (null === $tables) {
+            // Get all user tables
+            $sql = "SELECT tablename FROM pg_tables WHERE schemaname = 'public'";
+            $tables = DB::select($sql);
+            $tables = array_map(static fn ($table) => $table->tablename, $tables);
+        }
 
-                    if ([] !== $tableErrors) {
-                        $errors[$table] = $tableErrors;
-                    }
-                    if ([] !== $tableWarnings) {
-                        $warnings[$table] = $tableWarnings;
+        foreach ($tables as $table) {
+            $tablesChecked++;
+            $tableErrors = [];
+            $tableWarnings = [];
+
+            // Find matching validation rules for this table
+            $matchingRules = [];
+            foreach ($validationRules as $pattern => $rules) {
+                if (fnmatch($pattern, $table)) {
+                    $matchingRules = array_merge_recursive($matchingRules, $rules);
+                }
+            }
+
+            if ([] !== $matchingRules) {
+                // Check required columns
+                if (isset($matchingRules['required_columns'])) {
+                    $columns = DB::select("
+                        SELECT column_name
+                        FROM information_schema.columns
+                        WHERE table_name = ? AND table_schema = 'public'
+                    ", [$table]);
+                    $columnNames = array_map(static fn ($col) => $col->column_name, $columns);
+
+                    foreach ($matchingRules['required_columns'] as $requiredColumn) {
+                        if (!\in_array($requiredColumn, $columnNames, true)) {
+                            $tableErrors[] = "Missing required column: {$requiredColumn}";
+                        }
                     }
                 }
 
-                return [
-                    'valid' => [] === $errors,
-                    'errors' => $errors,
-                    'warnings' => $warnings,
-                    'tables_checked' => $tablesChecked,
-                ];
-            },
-            'validateStructure',
-            ['tables' => \count($tables ?? self::getUserTables())]
-        );
+                // Check required indexes
+                if (isset($matchingRules['required_indexes'])) {
+                    $indexes = DB::select("
+                        SELECT indexname
+                        FROM pg_indexes
+                        WHERE tablename = ? AND schemaname = 'public'
+                    ", [$table]);
+                    $indexNames = array_map(static fn ($idx) => $idx->indexname, $indexes);
+
+                    foreach ($matchingRules['required_indexes'] as $requiredIndex) {
+                        // Handle wildcard index patterns
+                        $found = false;
+                        foreach ($indexNames as $indexName) {
+                            if (fnmatch($table . '_' . $requiredIndex, $indexName)) {
+                                $found = true;
+
+                                break;
+                            }
+                        }
+                        if (!$found) {
+                            $tableWarnings[] = "Missing recommended index: {$requiredIndex}";
+                        }
+                    }
+                }
+
+                // Check column types
+                if (isset($matchingRules['column_types'])) {
+                    $columns = DB::select("
+                        SELECT column_name, data_type, is_nullable
+                        FROM information_schema.columns
+                        WHERE table_name = ? AND table_schema = 'public'
+                    ", [$table]);
+
+                    foreach ($columns as $column) {
+                        if (isset($matchingRules['column_types'][$column->column_name])) {
+                            $expectedType = $matchingRules['column_types'][$column->column_name];
+
+                            // Handle type aliases
+                            $actualType = $column->data_type;
+                            $typeMatches = [
+                                'bigint' => ['bigint'],
+                                'integer' => ['integer', 'int'],
+                                'text' => ['text', 'character varying', 'varchar'],
+                                'timestamp' => ['timestamp without time zone', 'timestamp with time zone'],
+                                'boolean' => ['boolean', 'bool'],
+                            ];
+
+                            $isValidType = false;
+                            if (isset($typeMatches[$expectedType])) {
+                                $isValidType = \in_array($actualType, $typeMatches[$expectedType], true);
+                            } else {
+                                $isValidType = $actualType === $expectedType;
+                            }
+
+                            if (!$isValidType) {
+                                $tableErrors[] = "Column '{$column->column_name}' has type '{$actualType}', expected '{$expectedType}'";
+                            }
+                        }
+                    }
+                }
+
+                // Check constraints
+                if (isset($matchingRules['required_constraints'])) {
+                    $constraints = DB::select('
+                        SELECT conname, contype
+                        FROM pg_constraint
+                        WHERE conrelid = ?::regclass
+                    ', [$table]);
+
+                    foreach ($matchingRules['required_constraints'] as $constraintName => $constraintType) {
+                        $found = false;
+                        foreach ($constraints as $constraint) {
+                            if (fnmatch($constraintName, $constraint->conname) && $constraint->contype === $constraintType) {
+                                $found = true;
+
+                                break;
+                            }
+                        }
+                        if (!$found) {
+                            $tableErrors[] = "Missing required constraint: {$constraintName} (type: {$constraintType})";
+                        }
+                    }
+                }
+            }
+
+            // Always check for PostgreSQL best practices
+            // Check if sequences need fixing
+            $sequences = DB::select("
+                SELECT seq.relname AS sequence_name
+                FROM pg_class seq
+                JOIN pg_depend dep ON seq.oid = dep.objid
+                JOIN pg_class tbl ON dep.refobjid = tbl.oid
+                WHERE seq.relkind = 'S' AND tbl.relname = ?
+            ", [$table]);
+
+            foreach ($sequences as $sequence) {
+                $lastValue = DB::selectOne("SELECT last_value FROM {$sequence->sequence_name}");
+                if ($lastValue && $lastValue->last_value < 1) {
+                    $tableWarnings[] = "Sequence '{$sequence->sequence_name}' may need to be reset";
+                }
+            }
+
+            // Check for missing updated_at trigger
+            $hasUpdatedAt = DB::selectOne("
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = ? AND column_name = 'updated_at' AND table_schema = 'public'
+            ", [$table]);
+
+            if ($hasUpdatedAt) {
+                $hasTrigger = DB::selectOne('
+                    SELECT 1 FROM information_schema.triggers
+                    WHERE trigger_name = ? AND event_object_table = ?
+                ', ["update_{$table}_updated_at", $table]);
+
+                if (!$hasTrigger) {
+                    $tableWarnings[] = "Table has 'updated_at' column but missing update trigger";
+                }
+            }
+
+            if ([] !== $tableErrors) {
+                $errors[$table] = $tableErrors;
+            }
+            if ([] !== $tableWarnings) {
+                $warnings[$table] = $tableWarnings;
+            }
+        }
+        self::recordOperationTime($startTime, 'validateStructure', ['tables' => $tablesChecked]);
+
+        return [
+            'valid' => [] === $errors,
+            'errors' => $errors,
+            'warnings' => $warnings,
+            'tables_checked' => $tablesChecked,
+        ];
     }
 
     /**
@@ -289,40 +531,58 @@ class PgHelperLibrary
      */
     public static function runHealthCheck(): array
     {
-        return self::withTiming(
-            static function (): array {
-                $healthChecks = [
-                    'sequences' => static fn (): array => HealthChecker::checkSequenceHealth(),
-                    'triggers' => static fn (): array => HealthChecker::checkTriggerHealth(),
-                    'structure' => static fn (): array => HealthChecker::checkStructureHealth(),
-                    'performance' => static fn (): array => HealthChecker::checkPerformanceHealth(),
-                    'indexes' => static fn (): array => HealthChecker::checkIndexHealth(),
-                ];
+        $startTime = microtime(true);
+        $checks = [];
+        $recommendations = [];
+        $totalScore = 0;
+        $maxScore = 0;
 
-                $checks = [];
-                $totalScore = 0;
-                $recommendations = [];
+        // Check 1: Sequence health
+        $sequenceCheck = self::checkSequenceHealth();
+        $checks['sequences'] = $sequenceCheck;
+        $totalScore += $sequenceCheck['score'];
+        $maxScore += 100;
 
-                foreach ($healthChecks as $name => $checkFunction) {
-                    $result = $checkFunction();
-                    $checks[$name] = $result;
-                    $totalScore += $result['score'];
+        // Check 2: Trigger health
+        $triggerCheck = self::checkTriggerHealth();
+        $checks['triggers'] = $triggerCheck;
+        $totalScore += $triggerCheck['score'];
+        $maxScore += 100;
 
-                    if ($result['score'] < 80 && isset($result['recommendation'])) {
-                        $recommendations[] = $result['recommendation'];
-                    }
-                }
+        // Check 3: Table structure validation
+        $structureCheck = self::checkStructureHealth();
+        $checks['structure'] = $structureCheck;
+        $totalScore += $structureCheck['score'];
+        $maxScore += 100;
 
-                $overallScore = (int) round($totalScore / \count($healthChecks));
+        // Check 4: Performance indicators
+        $performanceCheck = self::checkPerformanceHealth();
+        $checks['performance'] = $performanceCheck;
+        $totalScore += $performanceCheck['score'];
+        $maxScore += 100;
 
-                return [
-                    'overall_score' => $overallScore,
-                    'checks' => $checks,
-                    'recommendations' => $recommendations,
-                ];
-            },
-            'runHealthCheck'
-        );
+        // Check 5: Index health
+        $indexCheck = self::checkIndexHealth();
+        $checks['indexes'] = $indexCheck;
+        $totalScore += $indexCheck['score'];
+        $maxScore += 100;
+
+        // Generate recommendations based on checks
+        foreach ($checks as $check) {
+            if ($check['score'] < 80 && isset($check['recommendation'])) {
+                $recommendations[] = $check['recommendation'];
+            }
+        }
+
+        $overallScore = (int) round(($totalScore / $maxScore) * 100);
+
+        self::recordOperationTime($startTime, 'runHealthCheck');
+
+        return [
+            'overall_score' => $overallScore,
+            'checks' => $checks,
+            'recommendations' => $recommendations,
+        ];
     }
 
     /**
@@ -330,7 +590,11 @@ class PgHelperLibrary
      */
     public static function addAutoApplyStandards(): void
     {
-        self::executeSqlFile('000060_auto_apply_standards.sql');
+        $sql = file_get_contents(__DIR__ . '/sql/000060_auto_apply_standards.sql');
+        if (false === $sql) {
+            throw new \RuntimeException('Failed to read SQL file: 000060_auto_apply_standards.sql');
+        }
+        DB::unprepared($sql);
     }
 
     /**
@@ -879,87 +1143,5 @@ PHP;
                 ])
             ;
         }
-    }
-
-    /**
-     * Fix sequences for a single table.
-     *
-     * @return array<string>
-     */
-    private static function fixTableSequences(string $table): array
-    {
-        $sequences = self::getTableSequences($table);
-        $fixed = [];
-
-        foreach ($sequences as $sequence) {
-            /** @var object{sequence_name: string} $sequence */
-            if (self::fixSingleSequence($table, $sequence->sequence_name)) {
-                $fixed[] = $sequence->sequence_name;
-            }
-        }
-
-        return $fixed;
-    }
-
-    /**
-     * Fix a single sequence.
-     */
-    private static function fixSingleSequence(string $table, string $sequenceName): bool
-    {
-        $columnInfo = self::getSequenceColumnInfo($table, $sequenceName);
-
-        if (!$columnInfo) {
-            return false;
-        }
-
-        $maxValue = self::getColumnMaxValue($table, $columnInfo->column_name);
-        DB::statement("SELECT setval('{$sequenceName}', GREATEST({$maxValue}, 1), true)");
-
-        return true;
-    }
-
-    /**
-     * Get max value for a column.
-     */
-    private static function getColumnMaxValue(string $table, string $column): int
-    {
-        $result = DB::selectOne("SELECT COALESCE(MAX({$column}), 0) as max_val FROM {$table}");
-
-        return (int) ($result->max_val ?? 0);
-    }
-
-    /**
-     * Process trigger for a single table.
-     *
-     * @return string 'created' or 'skipped'
-     */
-    private static function processTableTrigger(string $table): string
-    {
-        if (!self::columnExists($table, 'updated_at')) {
-            return 'skipped';
-        }
-
-        $triggerName = "update_{$table}_updated_at";
-
-        if (self::triggerExists($triggerName, $table)) {
-            return 'skipped';
-        }
-
-        self::createUpdatedAtTrigger($table);
-
-        return 'created';
-    }
-
-    /**
-     * Create updated_at trigger for a table.
-     */
-    private static function createUpdatedAtTrigger(string $table): void
-    {
-        DB::statement("
-            CREATE TRIGGER update_{$table}_updated_at
-            BEFORE UPDATE ON {$table}
-            FOR EACH ROW
-            EXECUTE PROCEDURE update_updated_at_column()
-        ");
     }
 }

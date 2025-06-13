@@ -5,14 +5,19 @@ declare(strict_types=1);
 namespace HaakCo\PostgresHelper\Tests;
 
 use HaakCo\PostgresHelper\PostgresHelperServiceProvider;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
+    use DatabaseTransactions;
     #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
+        
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->artisan('migrate')->run();
     }
 
     #[\Override]
@@ -32,7 +37,7 @@ abstract class TestCase extends Orchestra
             'driver' => 'pgsql',
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'postgres_helper_test'),
+            'database' => env('DB_TEST_DATABASE', 'postgres_helper_test'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', 'postgres'),
             'charset' => 'utf8',
