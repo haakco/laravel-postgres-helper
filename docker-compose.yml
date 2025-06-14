@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: ghcr.io/haakco/postgresql:16-bullseye
+    container_name: laravel-postgres-helper-db
+    environment:
+      POSTGRES_DB: laravel_postgres_helper
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      # Development optimizations (NEVER use in production)
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements,auto_explain"
+      - "-c"
+      - "pg_stat_statements.track=all"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "auto_explain.log_min_duration=200ms"
+      - "-c"
+      - "auto_explain.log_analyze=true"
+      - "-c"
+      - "auto_explain.log_buffers=true"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "wal_level=minimal"
+      - "-c"
+      - "max_wal_senders=0"
+      - "-c"
+      - "checkpoint_segments=512"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=64MB"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+    ports:
+      - "${DB_PGSQL_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./tests/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - laravel-postgres-helper
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-test:
+    image: ghcr.io/haakco/postgresql:16-bullseye
+    container_name: laravel-postgres-helper-test-db
+    environment:
+      POSTGRES_DB: laravel_postgres_helper_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+    command:
+      - "postgres"
+      - "-c"
+      - "fsync=off"
+      - "-c"
+      - "synchronous_commit=off"
+      - "-c"
+      - "wal_level=minimal"
+      - "-c"
+      - "max_wal_senders=0"
+    ports:
+      - "${DB_PGSQL_TEST_PORT:-5433}:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./tests/sql:/docker-entrypoint-initdb.d:ro
+    networks:
+      - laravel-postgres-helper
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  laravel-postgres-helper:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  postgres_test_data:
+    driver: local

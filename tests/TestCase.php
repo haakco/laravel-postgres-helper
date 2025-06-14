@@ -11,13 +11,14 @@ use Orchestra\Testbench\TestCase as Orchestra;
 abstract class TestCase extends Orchestra
 {
     use DatabaseTransactions;
+
     #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->artisan('migrate')->run();
+        $this->artisan('migrate');
     }
 
     #[\Override]
@@ -35,11 +36,11 @@ abstract class TestCase extends Orchestra
         $app['config']->set('database.default', 'pgsql');
         $app['config']->set('database.connections.pgsql', [
             'driver' => 'pgsql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_TEST_DATABASE', 'postgres_helper_test'),
-            'username' => env('DB_USERNAME', 'postgres'),
-            'password' => env('DB_PASSWORD', 'postgres'),
+            'host' => env('DB_TEST_HOST', '127.0.0.1'),
+            'port' => env('DB_TEST_PORT', '5433'),
+            'database' => env('DB_TEST_DATABASE', 'laravel_postgres_helper_test'),
+            'username' => env('DB_TEST_USERNAME', 'postgres'),
+            'password' => env('DB_TEST_PASSWORD', 'postgres'),
             'charset' => 'utf8',
             'prefix' => '',
             'schema' => 'public',

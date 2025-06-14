@@ -62,12 +62,24 @@
       "vendor/bin/phpstan analyse --no-progress"
     ],
     "lint-check": [
-      "vendor/bin/phpstan analyse --no-progress",
-      "vendor/bin/rector process --dry-run"
+      "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --verbose --dry-run",
+      "vendor/bin/rector process --dry-run",
+      "vendor/bin/phpstan analyse --no-progress"
     ],
+    "lint-fix": ["@lint"],
+    "check-all": ["@lint-check", "@test"],
     "test": "vendor/bin/phpunit",
+    "test-unit": "vendor/bin/phpunit --testsuite Unit",
+    "test-integration": "vendor/bin/phpunit --testsuite Integration",
+    "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
     "format": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --verbose",
+    "format-check": "vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.dist.php --allow-risky=yes --verbose --dry-run",
     "rector": "vendor/bin/rector process --no-diffs",
-    "phpstan": "vendor/bin/phpstan analyse --no-progress"
+    "phpstan": "vendor/bin/phpstan analyse --no-progress",
+    "fix-all": ["@lint", "@test"],
+    "pre-commit": ["@lint-check", "@test"],
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:reset": "docker-compose down -v && docker-compose up -d"
   }
 }

@@ -16,21 +16,21 @@ trait DatabaseSeeder
     protected function createTestTables(): void
     {
         // Standard table with all expected columns
-        Schema::create('test_standard', function (Blueprint $table) {
+        Schema::create('test_standard', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->timestamps();
         });
 
         // Table without updated_at
-        Schema::create('test_no_updated_at', function (Blueprint $table) {
+        Schema::create('test_no_updated_at', static function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->timestamp('created_at');
         });
 
         // Table with custom sequence
-        Schema::create('test_custom_sequence', function (Blueprint $table) {
+        Schema::create('test_custom_sequence', static function (Blueprint $table): void {
             $table->id();
             $table->string('code');
             $table->timestamps();
@@ -50,7 +50,7 @@ trait DatabaseSeeder
         DB::statement('CREATE TABLE test_missing_columns (id SERIAL PRIMARY KEY, name VARCHAR(255))');
 
         // Wrong column types
-        Schema::create('test_wrong_types', function (Blueprint $table) {
+        Schema::create('test_wrong_types', static function (Blueprint $table): void {
             $table->id();
             $table->integer('name'); // Should be string
             $table->string('age'); // Should be integer
@@ -64,7 +64,7 @@ trait DatabaseSeeder
     protected function createPerformanceTables(): void
     {
         // Large table with many records
-        Schema::create('test_large_table', function (Blueprint $table) {
+        Schema::create('test_large_table', static function (Blueprint $table): void {
             $table->id();
             $table->string('title');
             $table->text('content');
@@ -73,7 +73,7 @@ trait DatabaseSeeder
         });
 
         // Table with unused index
-        Schema::create('test_unused_index', function (Blueprint $table) {
+        Schema::create('test_unused_index', static function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->string('unused_field');

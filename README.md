@@ -18,33 +18,45 @@ composer require haakco/laravel-postgres-helper
 
 ### Prerequisites
 
-The integration tests require a PostgreSQL database. You have two options:
+The integration tests require a PostgreSQL database. You have three options:
 
-#### Option 1: Local PostgreSQL
+#### Option 1: Docker Compose (Recommended)
 
-1. Create a test database:
 ```bash
-createdb postgres_helper_test
+# Start the test database
+just up
+# or
+docker-compose up -d
+
+# Database is available at:
+# Main DB: localhost:5432 (laravel_postgres_helper)
+# Test DB: localhost:5433 (laravel_postgres_helper_test)
 ```
 
-2. Copy the test environment file:
+#### Option 2: Justfile Commands
+
+```bash
+# Complete setup with database
+just setup
+
+# Or just reset the database
+just db-reset
+```
+
+#### Option 3: Manual Setup
+
+1. Copy the test environment file:
 ```bash
 cp .env.testing.example .env.testing
 ```
 
-3. Update `.env.testing` with your database credentials:
+2. The default configuration uses Docker Compose settings:
 ```
 DB_TEST_HOST=127.0.0.1
-DB_TEST_PORT=5432
-DB_TEST_DATABASE=postgres_helper_test
+DB_TEST_PORT=5433
+DB_TEST_DATABASE=laravel_postgres_helper_test
 DB_TEST_USERNAME=postgres
-DB_TEST_PASSWORD=your_password
-```
-
-#### Option 2: Docker
-
-```bash
-docker run --name postgres-test -e POSTGRES_DB=postgres_helper_test -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:16
+DB_TEST_PASSWORD=postgres
 ```
 
 ### Running Tests
@@ -52,12 +64,63 @@ docker run --name postgres-test -e POSTGRES_DB=postgres_helper_test -e POSTGRES_
 ```bash
 # Run all tests
 composer test
+# or
+just test
 
 # Run only unit tests (no database required)
-./vendor/bin/phpunit --testsuite Unit
+composer test-unit
+# or
+just test-unit
+
+# Run only integration tests
+composer test-integration
+# or
+just test-integration
 
 # Run with coverage
-composer test -- --coverage-html coverage
+composer test-coverage
+# or
+just test-coverage
+
+# Run tests with automatic database setup
+just test-with-db
+```
+
+## Development Commands
+
+### Justfile Commands
+
+```bash
+# Install dependencies
+just install
+
+# Linting and formatting
+just lint          # Auto-fix all issues
+just lint-check    # Check without fixing
+just format        # PHP-CS-Fixer only
+just phpstan       # PHPStan analysis only
+
+# Testing
+just test          # Run all tests
+just test-unit     # Unit tests only
+just test-integration # Integration tests only
+just test-coverage # Generate coverage report
+
+# Database management
+just up            # Start Docker containers
+just down          # Stop Docker containers
+just db-reset      # Reset test database
+just db            # Access main PostgreSQL
+just db-test       # Access test PostgreSQL
+
+# Quality assurance
+just fix-all       # Lint and test
+just check-all     # Check everything
+just pre-commit    # Pre-commit checks
+
+# Development workflow
+just setup         # Complete setup
+just dev           # Quick fix-all cycle
 ```
 
 ## Usage

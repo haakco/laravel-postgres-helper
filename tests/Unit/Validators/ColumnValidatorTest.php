@@ -7,33 +7,35 @@ namespace HaakCo\PostgresHelper\Tests\Unit\Validators;
 use HaakCo\PostgresHelper\Libraries\Validators\ColumnValidator;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @internal
+ *
+ * @coversNothing
+ */
 final class ColumnValidatorTest extends TestCase
 {
-    /** @test */
-    public function it_validates_required_columns(): void
+    public function test_it_validates_required_columns(): void
     {
         $existing = ['id', 'name', 'created_at'];
         $required = ['id', 'name', 'created_at', 'updated_at'];
 
         $errors = ColumnValidator::validateRequired($existing, $required);
 
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString('updated_at', $errors[0]);
+        self::assertCount(1, $errors);
+        self::assertStringContainsString('updated_at', $errors[0]);
     }
 
-    /** @test */
-    public function it_returns_no_errors_when_all_required_columns_exist(): void
+    public function test_it_returns_no_errors_when_all_required_columns_exist(): void
     {
         $existing = ['id', 'name', 'created_at', 'updated_at'];
         $required = ['id', 'name', 'created_at', 'updated_at'];
 
         $errors = ColumnValidator::validateRequired($existing, $required);
 
-        $this->assertEmpty($errors);
+        self::assertEmpty($errors);
     }
 
-    /** @test */
-    public function it_validates_column_types_with_aliases(): void
+    public function test_it_validates_column_types_with_aliases(): void
     {
         $columns = [
             (object) ['column_name' => 'id', 'data_type' => 'bigint', 'is_nullable' => 'NO'],
@@ -49,11 +51,10 @@ final class ColumnValidatorTest extends TestCase
 
         $errors = ColumnValidator::validateTypes($columns, $expectedTypes);
 
-        $this->assertEmpty($errors);
+        self::assertEmpty($errors);
     }
 
-    /** @test */
-    public function it_detects_wrong_column_types(): void
+    public function test_it_detects_wrong_column_types(): void
     {
         $columns = [
             (object) ['column_name' => 'age', 'data_type' => 'character varying', 'is_nullable' => 'NO'],
@@ -63,12 +64,11 @@ final class ColumnValidatorTest extends TestCase
 
         $errors = ColumnValidator::validateTypes($columns, $expectedTypes);
 
-        $this->assertCount(1, $errors);
-        $this->assertStringContainsString("'age' has type 'character varying', expected 'integer'", $errors[0]);
+        self::assertCount(1, $errors);
+        self::assertStringContainsString("'age' has type 'character varying', expected 'integer'", $errors[0]);
     }
 
-    /** @test */
-    public function it_ignores_columns_without_type_expectations(): void
+    public function test_it_ignores_columns_without_type_expectations(): void
     {
         $columns = [
             (object) ['column_name' => 'id', 'data_type' => 'bigint', 'is_nullable' => 'NO'],
@@ -81,6 +81,6 @@ final class ColumnValidatorTest extends TestCase
 
         $errors = ColumnValidator::validateTypes($columns, $expectedTypes);
 
-        $this->assertEmpty($errors);
+        self::assertEmpty($errors);
     }
 }
