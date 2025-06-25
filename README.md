@@ -123,6 +123,33 @@ just setup         # Complete setup
 just dev           # Quick fix-all cycle
 ```
 
+## Upgrading from v3.x to v4.x
+
+When upgrading from version 3.x to 4.x, the package includes a migration that will automatically update your PostgreSQL functions to the latest versions:
+
+```bash
+# After upgrading the package
+composer update haakco/laravel-postgres-helper
+
+# Run migrations to update PostgreSQL functions
+php artisan migrate
+```
+
+The migration `2025_01_25_000001_update_postgres_helper_functions_v4.php` will:
+- Update all PostgreSQL helper functions to their latest definitions
+- Add a comment to track the update
+- Use `CREATE OR REPLACE` so it's safe to run multiple times
+
+If you prefer to update manually without migrations:
+```php
+// Update all functions manually
+PgHelperLibrary::updateDateColumnsDefault();
+PgHelperLibrary::addUpdateUpdatedAtColumn();
+PgHelperLibrary::addUpdateUpdatedAtColumnForTables();
+PgHelperLibrary::addFixAllSeq();
+PgHelperLibrary::addFixDb();
+```
+
 ## Usage
 
 ### Basic Usage

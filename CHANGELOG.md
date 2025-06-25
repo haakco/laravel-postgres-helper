@@ -84,6 +84,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Strict types declaration everywhere
   - Modern PHP practices and patterns
 
+- **Update Migration**:
+  - New migration `2025_01_25_000001_update_postgres_helper_functions_v4.php`
+  - Ensures existing installations get updated PostgreSQL functions
+  - Safe to run multiple times (uses CREATE OR REPLACE)
+
 ### Fixed
 - All PHPStan level 8 compliance issues
 - Proper type declarations throughout
