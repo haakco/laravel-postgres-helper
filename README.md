@@ -28,10 +28,19 @@ just up
 # or
 docker-compose up -d
 
-# Database is available at:
-# Main DB: localhost:5432 (laravel_postgres_helper)
-# Test DB: localhost:5433 (laravel_postgres_helper_test)
+# Stop the containers
+just down
+# or
+docker-compose down
 ```
+
+**Docker Services:**
+- **Main Database**: `localhost:5432` (database: `laravel_postgres_helper`)
+- **Test Database**: `localhost:5433` (database: `laravel_postgres_helper_test`)
+- **Username**: `postgres` / **Password**: `postgres`
+- **PostgreSQL Version**: 16 with extensions (TimescaleDB, PostGIS, pg_stat_statements)
+
+**Note**: The Docker setup uses development-optimized settings (fsync=off) for better performance. Never use these settings in production!
 
 #### Option 2: Justfile Commands
 
@@ -179,6 +188,45 @@ $validation = PgHelperLibrary::validateStructure();
 if (!$validation['valid']) {
     // Handle validation errors
 }
+```
+
+## Troubleshooting
+
+### Docker Issues
+
+**Port Conflicts:**
+If you have PostgreSQL already running locally, change the ports in your `.env` file:
+```bash
+DB_PGSQL_PORT=5434
+DB_PGSQL_TEST_PORT=5435
+```
+
+**Connection Issues:**
+```bash
+# Check container status
+docker-compose ps
+
+# View logs
+docker-compose logs postgres
+docker-compose logs postgres-test
+```
+
+**Reset Databases:**
+```bash
+# Remove all data and recreate fresh databases
+docker-compose down -v
+docker-compose up -d
+```
+
+### Test Database Issues
+
+**"uuid_generate_v4() does not exist" error:**
+```bash
+# The test database needs the uuid-ossp extension
+just db-reset
+# or manually:
+createdb laravel_postgres_helper_test
+psql laravel_postgres_helper_test -c "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
 ```
 
 ## License

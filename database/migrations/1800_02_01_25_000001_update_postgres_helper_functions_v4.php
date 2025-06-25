@@ -15,7 +15,8 @@ return new class extends Migration
     public function up(): void
     {
         // Add a comment to track this update
-        DB::statement("COMMENT ON FUNCTION public.fix_db() IS 'Updated by laravel-postgres-helper v4.0.0 on ' || NOW()");
+        $timestamp = now()->format('Y-m-d H:i:s');
+        DB::statement("COMMENT ON FUNCTION public.fix_db() IS 'Updated by laravel-postgres-helper v4.0.0 on {$timestamp}'");
         
         // Re-create all core functions to ensure they have the latest definitions
         // These use CREATE OR REPLACE, so they're safe to run multiple times
