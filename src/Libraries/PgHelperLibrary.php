@@ -56,6 +56,11 @@ class PgHelperLibrary
         self::executeSqlFile('000050_fix_db.sql');
     }
 
+    public static function addUuidHelperFunctions(): void
+    {
+        self::executeSqlFile('000070_uuid_helper_functions.sql');
+    }
+
     public static function fixAll(): void
     {
         self::withTiming(

@@ -26,6 +26,9 @@ return new class extends Migration
         PgHelperLibrary::addFixAllSeq();
         PgHelperLibrary::addFixDb();
         
+        // Add UUID helper functions (new in v4)
+        PgHelperLibrary::addUuidHelperFunctions();
+        
         // Log the update for debugging purposes
         if (function_exists('logger')) {
             logger()->info('PostgreSQL helper functions updated to v4.0.0');
