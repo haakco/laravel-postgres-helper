@@ -8,20 +8,20 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.3', '8.4']
-        laravel: ['10.*', '11.*', '12.*']
-        postgres: ['13', '14', '15', '16']
+        php: ["8.3", "8.4"]
+        laravel: ["10.*", "11.*", "12.*"]
+        postgres: ["13", "14", "15", "16"]
         include:
-          - laravel: '10.*'
-            testbench: '8.*'
-          - laravel: '11.*'
-            testbench: '9.*'
-          - laravel: '12.*'
-            testbench: '10.*'
+          - laravel: "10.*"
+            testbench: "8.*"
+          - laravel: "11.*"
+            testbench: "9.*"
+          - laravel: "12.*"
+            testbench: "10.*"
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - PG${{ matrix.postgres }}
 
@@ -71,7 +71,7 @@ jobs:
           DB_PASSWORD: postgres
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Lint
 
     steps:
@@ -81,7 +81,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: "8.3"
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_pgsql, bcmath
           coverage: none
 
