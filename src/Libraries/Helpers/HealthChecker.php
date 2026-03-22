@@ -144,8 +144,10 @@ class HealthChecker
             return false;
         }
 
+        $quotedColumn = '"' . str_replace('"', '""', $columnInfo->column_name) . '"';
+        $quotedTable = '"' . str_replace('"', '""', $sequence->table_name) . '"';
         $maxValue = DB::selectOne(
-            "SELECT COALESCE(MAX({$columnInfo->column_name}), 0) as max_val FROM {$sequence->table_name}"
+            "SELECT COALESCE(MAX({$quotedColumn}), 0) as max_val FROM {$quotedTable}"
         );
 
         return $maxValue && $sequence->last_value < $maxValue->max_val;

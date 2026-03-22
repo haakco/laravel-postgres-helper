@@ -27,8 +27,14 @@ trait PostgresQueries
      */
     protected static function getTablesWithColumn(string $columnName): array
     {
-        $sql = "SELECT table_name FROM information_schema.columns
-                WHERE column_name = ? AND table_schema = 'public'";
+        $sql = "SELECT c.table_name
+                FROM information_schema.columns c
+                JOIN information_schema.tables t
+                  ON c.table_name = t.table_name
+                  AND c.table_schema = t.table_schema
+                WHERE c.column_name = ?
+                  AND c.table_schema = 'public'
+                  AND t.table_type = 'BASE TABLE'";
         $tables = DB::select($sql, [$columnName]);
 
         return array_map(static fn ($table) => $table->table_name, $tables);
