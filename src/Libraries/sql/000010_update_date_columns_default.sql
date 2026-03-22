@@ -7,8 +7,8 @@ DECLARE
 BEGIN
   FOR table_record IN
     SELECT
-      t.table_schema || '.' || t.table_name AS table_name,
-      c.column_name
+      QUOTE_IDENT(t.table_schema) || '.' || QUOTE_IDENT(t.table_name) AS table_name,
+      QUOTE_IDENT(c.column_name) AS column_name
     FROM
       information_schema.tables t
       JOIN information_schema.columns c
@@ -16,10 +16,12 @@ BEGIN
         AND t.table_schema = c.table_schema
         AND c.column_name IN ('created_at', 'updated_at')
         AND (
-          c.column_default <> 'now()' ||
+          c.column_default <> 'now()' OR
             c.column_default IS NULL
           )
         AND c.data_type LIKE '%timestamp%'
+    WHERE
+      t.table_type = 'BASE TABLE'
     ORDER BY
       t.table_schema,
       t.table_name

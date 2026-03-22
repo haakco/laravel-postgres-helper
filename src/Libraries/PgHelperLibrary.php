@@ -887,6 +887,15 @@ PHP;
     }
 
     /**
+     * Quote a PostgreSQL identifier (table name, column name, etc.) to handle
+     * mixed-case names, reserved words, and special characters.
+     */
+    private static function quoteIdentifier(string $identifier): string
+    {
+        return '"' . str_replace('"', '""', $identifier) . '"';
+    }
+
+    /**
      * Fix sequences for a single table.
      *
      * @return array<string>
@@ -918,7 +927,8 @@ PHP;
         }
 
         $maxValue = self::getColumnMaxValue($table, $columnInfo->column_name);
-        DB::statement("SELECT setval('{$sequenceName}', GREATEST({$maxValue}, 1), true)");
+        $quotedSeq = self::quoteIdentifier($sequenceName);
+        DB::statement("SELECT setval('{$quotedSeq}', GREATEST({$maxValue}, 1), true)");
 
         return true;
     }
@@ -928,7 +938,9 @@ PHP;
      */
     private static function getColumnMaxValue(string $table, string $column): int
     {
-        $result = DB::selectOne("SELECT COALESCE(MAX({$column}), 0) as max_val FROM {$table}");
+        $quotedTable = self::quoteIdentifier($table);
+        $quotedColumn = self::quoteIdentifier($column);
+        $result = DB::selectOne("SELECT COALESCE(MAX({$quotedColumn}), 0) as max_val FROM {$quotedTable}");
 
         return (int) ($result->max_val ?? 0);
     }
@@ -960,9 +972,12 @@ PHP;
      */
     private static function createUpdatedAtTrigger(string $table): void
     {
+        $quotedTable = self::quoteIdentifier($table);
+        $safeName = preg_replace('/[^a-zA-Z0-9_]/', '_', $table);
+
         DB::statement("
-            CREATE TRIGGER update_{$table}_updated_at
-            BEFORE UPDATE ON {$table}
+            CREATE TRIGGER update_{$safeName}_updated_at
+            BEFORE UPDATE ON {$quotedTable}
             FOR EACH ROW
             EXECUTE PROCEDURE update_updated_at_column()
         ");

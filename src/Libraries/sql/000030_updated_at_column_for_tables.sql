@@ -7,7 +7,7 @@ DECLARE
 BEGIN
   FOR table_record IN
     SELECT
-      t.table_schema || '.' || t.table_name AS table_name,
+      QUOTE_IDENT(t.table_schema) || '.' || QUOTE_IDENT(t.table_name) AS table_name,
       t.table_name AS prefix
     FROM
       information_schema.tables t
