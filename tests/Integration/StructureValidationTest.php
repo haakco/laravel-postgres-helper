@@ -50,6 +50,9 @@ final class StructureValidationTest extends TestCase
                     'test_users_email_unique' => 'u',
                 ],
             ],
+            'test_products' => [
+                'required_columns' => ['name'],
+            ],
         ]);
 
         // Create test tables
@@ -74,7 +77,7 @@ final class StructureValidationTest extends TestCase
         });
 
         // Run validation
-        $result = PgHelperLibrary::validateStructure();
+        $result = PgHelperLibrary::validateStructure(['test_types', 'test_users', 'test_products']);
 
         // Assert
         self::assertFalse($result['valid']);

@@ -102,7 +102,7 @@ class PgHelperLibrary
      */
     public static function fixSequences(?array $tables = null): array
     {
-        return self::withTiming(
+        $result = self::withTiming(
             static function () use ($tables): array {
                 $tablesToFix = $tables ?? self::getUserTables();
                 $sequencesFixed = [];
@@ -117,6 +117,11 @@ class PgHelperLibrary
             'fixSequences',
             ['tables' => \count($tables ?? self::getUserTables())]
         );
+
+        return [
+            'sequences_fixed' => $result['sequences_fixed'],
+            'time_taken' => self::getLastOperationTime() ?? 0.0,
+        ];
     }
 
     /**
@@ -128,7 +133,7 @@ class PgHelperLibrary
      */
     public static function fixTriggers(?array $tables = null): array
     {
-        return self::withTiming(
+        $result = self::withTiming(
             static function () use ($tables): array {
                 // Ensure the trigger function exists
                 self::addUpdateUpdatedAtColumn();
@@ -155,6 +160,12 @@ class PgHelperLibrary
             'fixTriggers',
             ['tables' => \count($tables ?? self::getTablesWithColumn('updated_at'))]
         );
+
+        return [
+            'triggers_created' => $result['triggers_created'],
+            'triggers_skipped' => $result['triggers_skipped'],
+            'time_taken' => self::getLastOperationTime() ?? 0.0,
+        ];
     }
 
     /**
@@ -178,17 +189,22 @@ class PgHelperLibrary
 
             // Check for proper sequence values
             $sequences = DB::select("
-                SELECT seq.relname AS sequence_name
+                SELECT seq_ns.nspname AS sequence_schema, seq.relname AS sequence_name
                 FROM pg_class seq
+                JOIN pg_namespace seq_ns ON seq.relnamespace = seq_ns.oid
                 JOIN pg_depend dep ON seq.oid = dep.objid
                 JOIN pg_class tbl ON dep.refobjid = tbl.oid
+                JOIN pg_namespace tbl_ns ON tbl.relnamespace = tbl_ns.oid
                 WHERE seq.relkind = 'S'
+                AND seq_ns.nspname = 'public'
+                AND tbl_ns.nspname = 'public'
                 AND tbl.relname = ?
             ", [$table]);
 
             $sequencesOk = true;
             foreach ($sequences as $sequence) {
-                $lastValue = DB::selectOne("SELECT last_value FROM {$sequence->sequence_name}");
+                $qualifiedSequence = self::quoteIdentifier($sequence->sequence_schema) . '.' . self::quoteIdentifier($sequence->sequence_name);
+                $lastValue = DB::selectOne("SELECT last_value FROM {$qualifiedSequence}");
                 if ($lastValue && $lastValue->last_value < 1) {
                     $sequencesOk = false;
 
@@ -359,7 +375,7 @@ class PgHelperLibrary
                     CREATE EVENT TRIGGER auto_apply_standards_trigger
                     ON ddl_command_end
                     WHEN TAG IN ('CREATE TABLE')
-                    EXECUTE FUNCTION auto_apply_table_standards()
+                    EXECUTE FUNCTION public.auto_apply_table_standards()
                 ");
 
                 $message = 'Event triggers enabled - standards will be automatically applied to new tables';
@@ -585,9 +601,9 @@ PHP;
             ', [$sequence->table_name, $sequence->sequence_name]);
 
             if ($columnInfo) {
-                $maxValue = DB::selectOne(
-                    "SELECT COALESCE(MAX({$columnInfo->column_name}), 0) as max_val FROM {$sequence->table_name}"
-                );
+                $qualifiedTable = self::quoteIdentifier('public') . '.' . self::quoteIdentifier($sequence->table_name);
+                $quotedColumn = self::quoteIdentifier($columnInfo->column_name);
+                $maxValue = DB::selectOne("SELECT COALESCE(MAX({$quotedColumn}), 0) as max_val FROM {$qualifiedTable}");
 
                 if ($maxValue && $sequence->last_value < $maxValue->max_val) {
                     $problemSequences[] = $sequence->sequence_name;
@@ -778,8 +794,8 @@ PHP;
         $unusedIndexes = DB::select("
             SELECT
                 schemaname,
-                tablename,
-                indexname,
+                relname AS tablename,
+                indexrelname AS indexname,
                 idx_scan,
                 pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
             FROM pg_stat_user_indexes
@@ -927,8 +943,12 @@ PHP;
         }
 
         $maxValue = self::getColumnMaxValue($table, $columnInfo->column_name);
-        $quotedSeq = self::quoteIdentifier($sequenceName);
-        DB::statement("SELECT setval('{$quotedSeq}', GREATEST({$maxValue}, 1), true)");
+        $qualifiedSequence = self::quoteIdentifier($columnInfo->sequence_schema) . '.' . self::quoteIdentifier($sequenceName);
+
+        DB::statement(
+            'SELECT setval(?::regclass, GREATEST(?::bigint, 1), true)',
+            [$qualifiedSequence, $maxValue]
+        );
 
         return true;
     }
@@ -938,7 +958,7 @@ PHP;
      */
     private static function getColumnMaxValue(string $table, string $column): int
     {
-        $quotedTable = self::quoteIdentifier($table);
+        $quotedTable = self::quoteIdentifier('public') . '.' . self::quoteIdentifier($table);
         $quotedColumn = self::quoteIdentifier($column);
         $result = DB::selectOne("SELECT COALESCE(MAX({$quotedColumn}), 0) as max_val FROM {$quotedTable}");
 
@@ -972,14 +992,14 @@ PHP;
      */
     private static function createUpdatedAtTrigger(string $table): void
     {
-        $quotedTable = self::quoteIdentifier($table);
+        $quotedTable = self::quoteIdentifier('public') . '.' . self::quoteIdentifier($table);
         $safeName = preg_replace('/[^a-zA-Z0-9_]/', '_', $table);
 
         DB::statement("
             CREATE TRIGGER update_{$safeName}_updated_at
             BEFORE UPDATE ON {$quotedTable}
             FOR EACH ROW
-            EXECUTE PROCEDURE update_updated_at_column()
+            EXECUTE PROCEDURE public.update_updated_at_column()
         ");
     }
 }

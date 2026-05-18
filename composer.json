@@ -78,8 +78,8 @@
     "phpstan": "vendor/bin/phpstan analyse --no-progress",
     "fix-all": ["@lint", "@test"],
     "pre-commit": ["@lint-check", "@test"],
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:reset": "docker-compose down -v && docker-compose up -d"
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:reset": "docker compose down -v && docker compose up -d"
   }
 }

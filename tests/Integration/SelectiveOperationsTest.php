@@ -144,6 +144,9 @@ final class SelectiveOperationsTest extends TestCase
             $table->timestamps();
         });
 
+        $initialStats = PgHelperLibrary::getOperationStats();
+        $initialFixSequenceCount = $initialStats['operations']['fixSequences']['count'] ?? 0;
+
         // Run an operation
         PgHelperLibrary::fixSequences(['test_performance']);
 
@@ -157,7 +160,7 @@ final class SelectiveOperationsTest extends TestCase
         self::assertArrayHasKey('total_operations', $stats);
         self::assertArrayHasKey('operations', $stats);
         self::assertArrayHasKey('fixSequences', $stats['operations']);
-        self::assertSame(1, $stats['operations']['fixSequences']['count']);
+        self::assertSame($initialFixSequenceCount + 1, $stats['operations']['fixSequences']['count']);
 
         // Clean up
         Schema::dropIfExists('test_performance');

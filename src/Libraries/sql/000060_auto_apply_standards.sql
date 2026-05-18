@@ -1,59 +1,63 @@
 -- Function to automatically apply PostgreSQL standards to new tables
-CREATE OR REPLACE FUNCTION auto_apply_table_standards()
+CREATE OR REPLACE FUNCTION public.auto_apply_table_standards()
 RETURNS event_trigger
 LANGUAGE plpgsql
 AS $$
 DECLARE
     obj record;
-    table_name text;
+    target_table_name text;
     has_updated_at boolean;
 BEGIN
     -- Loop through all objects created in this command
     FOR obj IN SELECT * FROM pg_event_trigger_ddl_commands() WHERE object_type = 'table'
     LOOP
-        -- Extract table name from object identity
-        table_name := split_part(obj.object_identity, '.', 2);
-        
+        SELECT c.relname
+        INTO target_table_name
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.oid = obj.objid
+          AND n.nspname = 'public';
+
         -- Skip system tables and temporary tables
-        IF table_name IS NULL OR 
-           table_name LIKE 'pg_%' OR 
-           table_name LIKE 'sql_%' OR
+        IF target_table_name IS NULL OR
+           target_table_name LIKE 'pg_%' OR
+           target_table_name LIKE 'sql_%' OR
            obj.schema_name != 'public' THEN
             CONTINUE;
         END IF;
         
         -- Check if table has updated_at column
         SELECT EXISTS (
-            SELECT 1 
-            FROM information_schema.columns 
-            WHERE table_schema = 'public' 
-            AND table_name = table_name 
-            AND column_name = 'updated_at'
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND table_name = target_table_name
+              AND column_name = 'updated_at'
         ) INTO has_updated_at;
         
         -- If table has updated_at column, create trigger
         IF has_updated_at THEN
             -- Create the trigger (if it doesn't exist)
             EXECUTE format('
-                CREATE TRIGGER update_%I_updated_at
-                BEFORE UPDATE ON %I
+                CREATE TRIGGER %I
+                BEFORE UPDATE ON public.%I
                 FOR EACH ROW
-                EXECUTE FUNCTION update_updated_at_column()',
-                table_name, table_name
+                EXECUTE FUNCTION public.update_updated_at_column()',
+                'update_' || target_table_name || '_updated_at', target_table_name
             );
             
-            RAISE NOTICE 'Applied updated_at trigger to table: %', table_name;
+            RAISE NOTICE 'Applied updated_at trigger to table: %', target_table_name;
         END IF;
         
         -- Fix sequences for the table
-        PERFORM fix_sequence_for_table(table_name);
+        PERFORM public.fix_sequence_for_table(target_table_name);
         
     END LOOP;
 END;
 $$;
 
 -- Helper function to fix sequences for a specific table
-CREATE OR REPLACE FUNCTION fix_sequence_for_table(p_table_name text)
+CREATE OR REPLACE FUNCTION public.fix_sequence_for_table(p_table_name text)
 RETURNS void
 LANGUAGE plpgsql
 AS $$
@@ -71,17 +75,21 @@ BEGIN
         JOIN pg_class seq ON seq.relname = s.sequence_name
         JOIN pg_depend d ON d.objid = seq.oid
         JOIN pg_class tbl ON tbl.oid = d.refobjid
+        JOIN pg_namespace tbl_ns ON tbl_ns.oid = tbl.relnamespace
+        JOIN pg_namespace seq_ns ON seq_ns.oid = seq.relnamespace
         JOIN pg_attribute a ON a.attrelid = tbl.oid AND a.attnum = d.refobjsubid
         WHERE tbl.relname = p_table_name
+        AND tbl_ns.nspname = 'public'
+        AND seq_ns.nspname = 'public'
         AND s.sequence_schema = 'public'
     LOOP
         -- Get the maximum value from the column
-        EXECUTE format('SELECT COALESCE(MAX(%I), 0) FROM %I', 
+        EXECUTE format('SELECT COALESCE(MAX(%I), 0) FROM public.%I',
                       seq_record.column_name, p_table_name) INTO max_id;
         
         -- Set the sequence to the max value (or 1 if table is empty)
-        EXECUTE format('SELECT setval(%L, GREATEST(%s, 1), true)', 
-                      seq_record.sequence_name, max_id);
+        EXECUTE format('SELECT setval(%L::regclass, GREATEST(%s, 1), true)',
+                      'public.' || quote_ident(seq_record.sequence_name), max_id);
                       
         RAISE NOTICE 'Fixed sequence % for table %.%', 
                     seq_record.sequence_name, p_table_name, seq_record.column_name;

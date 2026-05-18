@@ -14,22 +14,22 @@ update:
 
 # Start Docker containers
 docker-up:
-    docker-compose up -d
+    docker compose up -d
     @echo "Waiting for PostgreSQL to be ready..."
     @sleep 5
     @echo "PostgreSQL containers are ready!"
 
 # Stop Docker containers
 docker-down:
-    docker-compose down
+    docker compose down
 
 # Restart Docker containers
 docker-restart: docker-down docker-up
 
 # Reset Docker containers and volumes
 docker-reset:
-    docker-compose down -v
-    docker-compose up -d
+    docker compose down -v
+    docker compose up -d
     @echo "Databases have been reset!"
 
 # Run all tests
@@ -82,7 +82,7 @@ clear:
 
 # View Docker logs
 docker-logs:
-    docker-compose logs -f
+    docker compose logs -f
 
 # Access PostgreSQL main database
 db:
@@ -94,7 +94,7 @@ db-test:
 
 # Check Docker container status
 docker-status:
-    docker-compose ps
+    docker compose ps
 
 # Build and tag a new release
 release version:

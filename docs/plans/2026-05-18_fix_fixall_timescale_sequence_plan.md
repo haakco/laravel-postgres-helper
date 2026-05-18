@@ -1,6 +1,6 @@
 # Fix PgHelperLibrary fixAll Timescale and Sequence Bugs Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make `PgHelperLibrary::fixAll()` safe for non-public extension schemas and for tables whose maximum explicit ID is below `1`.
 
@@ -48,7 +48,7 @@
 
 **Team ownership:** Package test team owns `tests/Integration/PgHelperLibraryTest.php`.
 
-- [ ] **Step 1: Add the failing test**
+- [x] **Step 1: Add the failing test**
 
 Add this method after `test_it_handles_fix_all_method_for_backward_compatibility()`:
 
@@ -67,7 +67,7 @@ public function test_fix_all_keeps_sequences_at_or_above_one_when_table_contains
 }
 ```
 
-- [ ] **Step 2: Verify the test fails for the current bug**
+- [x] **Step 2: Verify the test fails for the current bug**
 
 Run:
 
@@ -88,7 +88,7 @@ If the test DB is not reachable on port `5433`, first resolve the Docker test DB
 
 **Team ownership:** Package test team owns `tests/Integration/PgHelperLibraryTest.php`.
 
-- [ ] **Step 1: Add teardown cleanup**
+- [x] **Step 1: Add teardown cleanup**
 
 Update `tearDown()` to drop the schema created by the new test:
 
@@ -102,7 +102,7 @@ protected function tearDown(): void
 }
 ```
 
-- [ ] **Step 2: Add the failing test**
+- [x] **Step 2: Add the failing test**
 
 Add this method after the sequence lower-bound test:
 
@@ -127,7 +127,7 @@ public function test_fix_all_ignores_non_public_schema_tables(): void
 }
 ```
 
-- [ ] **Step 3: Verify the test fails for the current bug**
+- [x] **Step 3: Verify the test fails for the current bug**
 
 Run:
 
@@ -148,7 +148,7 @@ Expected: FAIL because `fixAll()` mutates the non-public schema table by setting
 
 **Team ownership:** SQL function team owns only `src/Libraries/sql/*.sql` listed above.
 
-- [ ] **Step 1: Restrict date defaults to public schema**
+- [x] **Step 1: Restrict date defaults to public schema**
 
 In `src/Libraries/sql/000010_update_date_columns_default.sql`, update the `WHERE` clause to:
 
@@ -158,7 +158,7 @@ In `src/Libraries/sql/000010_update_date_columns_default.sql`, update the `WHERE
       AND t.table_schema = 'public'
 ```
 
-- [ ] **Step 2: Restrict updated_at triggers to public schema**
+- [x] **Step 2: Restrict updated_at triggers to public schema**
 
 In `src/Libraries/sql/000030_updated_at_column_for_tables.sql`, update the `WHERE` clause to:
 
@@ -169,7 +169,7 @@ In `src/Libraries/sql/000030_updated_at_column_for_tables.sql`, update the `WHER
       AND t.table_schema = 'public'
 ```
 
-- [ ] **Step 3: Guard sequence reset against values below one**
+- [x] **Step 3: Guard sequence reset against values below one**
 
 In `src/Libraries/sql/000040_fix_all_seq.sql`, replace:
 
@@ -183,7 +183,7 @@ with:
         ', GREATEST(COALESCE(MAX(' || QUOTE_IDENT(c.attname) || ') + 1, 1), 1), FALSE) FROM ' ||
 ```
 
-- [ ] **Step 4: Run focused tests**
+- [x] **Step 4: Run focused tests**
 
 Run:
 
@@ -202,7 +202,7 @@ Expected: PASS.
 
 **Team ownership:** Migration team owns only the new migration file.
 
-- [ ] **Step 1: Create the migration**
+- [x] **Step 1: Create the migration**
 
 Create `database/migrations/1800_02_04_000001_fix_internal_schema_exclusions_and_safe_sequences.php` with:
 
@@ -245,7 +245,7 @@ return new class extends Migration
 };
 ```
 
-- [ ] **Step 2: Verify migration syntax**
+- [x] **Step 2: Verify migration syntax**
 
 Run:
 
@@ -264,7 +264,7 @@ Expected: `No syntax errors detected`.
 
 **Team ownership:** SQL function team owns `src/Libraries/sql/000060_auto_apply_standards.sql`.
 
-- [ ] **Step 1: Fix the shadowed predicate**
+- [x] **Step 1: Fix the shadowed predicate**
 
 In `src/Libraries/sql/000060_auto_apply_standards.sql`, replace the local variable name and all uses in `auto_apply_table_standards()`.
 
@@ -383,7 +383,7 @@ with:
 
 **Team ownership:** Validation team owns test environment investigation. Do not change Docker volumes or compose config without coordinator approval.
 
-- [ ] **Step 1: Check current container state**
+- [x] **Step 1: Check current container state**
 
 Run:
 
@@ -394,7 +394,7 @@ docker logs --tail=80 laravel-postgres-helper-test-db
 
 Expected if broken: PostgreSQL 18 reports the existing data volume is mounted at `/var/lib/postgresql/data` with an incompatible layout.
 
-- [ ] **Step 2: Ask coordinator before destructive cleanup**
+- [x] **Step 2: Ask coordinator before destructive cleanup**
 
 If the PostgreSQL 18 volume-layout error appears, ask before running any command that deletes Docker volumes or database data.
 
@@ -405,7 +405,7 @@ docker compose down -v
 docker compose up -d postgres-test
 ```
 
-- [ ] **Step 3: Confirm test DB is reachable**
+- [x] **Step 3: Confirm test DB is reachable**
 
 Run:
 
@@ -424,7 +424,7 @@ Expected: `accepting connections`.
 
 **Team ownership:** Final validator owns full suite and lint.
 
-- [ ] **Step 1: Run focused integration test**
+- [x] **Step 1: Run focused integration test**
 
 Run:
 
@@ -434,7 +434,7 @@ vendor/bin/phpunit tests/Integration/PgHelperLibraryTest.php
 
 Expected: PASS.
 
-- [ ] **Step 2: Run full test suite**
+- [x] **Step 2: Run full test suite**
 
 Run:
 
@@ -444,7 +444,7 @@ composer test
 
 Expected: PASS.
 
-- [ ] **Step 3: Run full lint**
+- [x] **Step 3: Run full lint**
 
 Run:
 
@@ -454,7 +454,7 @@ composer lint
 
 Expected: PASS with zero PHP-CS-Fixer, Rector, or PHPStan failures.
 
-- [ ] **Step 4: Check git status**
+- [x] **Step 4: Check git status**
 
 Run:
 

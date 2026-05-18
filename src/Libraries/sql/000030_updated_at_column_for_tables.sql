@@ -18,17 +18,21 @@ BEGIN
       LEFT JOIN information_schema.triggers tr
         ON t.table_schema = tr.trigger_schema
         AND t.table_name = tr.event_object_table
-        AND tr.action_statement = 'EXECUTE FUNCTION update_updated_at_column()'
+        AND tr.action_statement IN (
+          'EXECUTE FUNCTION update_updated_at_column()',
+          'EXECUTE FUNCTION public.update_updated_at_column()'
+        )
     WHERE
       tr.event_object_table IS NULL
       AND t.table_type = 'BASE TABLE'
+      AND t.table_schema = 'public'
     ORDER BY
       t.table_schema,
       t.table_name
     LOOP
       EXECUTE 'CREATE TRIGGER
-        ' || table_record.prefix || '_before_update_updated_at BEFORE UPDATE ON ' || table_record.table_name || '
-        FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column()';
+        ' || QUOTE_IDENT(table_record.prefix || '_before_update_updated_at') || ' BEFORE UPDATE ON ' || table_record.table_name || '
+        FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column()';
     END LOOP;
 END;
 $$ LANGUAGE 'plpgsql';
