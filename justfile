@@ -13,21 +13,21 @@ update:
     composer update --no-interaction --prefer-dist --optimize-autoloader
 
 # Start Docker containers
-up:
+docker-up:
     docker-compose up -d
     @echo "Waiting for PostgreSQL to be ready..."
     @sleep 5
     @echo "PostgreSQL containers are ready!"
 
 # Stop Docker containers
-down:
+docker-down:
     docker-compose down
 
 # Restart Docker containers
-restart: down up
+docker-restart: docker-down docker-up
 
 # Reset Docker containers and volumes
-reset:
+docker-reset:
     docker-compose down -v
     docker-compose up -d
     @echo "Databases have been reset!"
@@ -81,7 +81,7 @@ clear:
     composer install
 
 # View Docker logs
-logs:
+docker-logs:
     docker-compose logs -f
 
 # Access PostgreSQL main database
@@ -93,7 +93,7 @@ db-test:
     docker exec -it laravel-postgres-helper-test-db psql -U postgres -d laravel_postgres_helper_test
 
 # Check Docker container status
-status:
+docker-status:
     docker-compose ps
 
 # Build and tag a new release
