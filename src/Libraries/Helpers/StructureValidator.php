@@ -68,7 +68,7 @@ class StructureValidator
         array &$errors,
         array &$warnings
     ): void {
-        if (isset($rules['required_columns'])) {
+        if (isset($rules['required_columns']) || isset($rules['column_types'])) {
             self::validateColumns($table, $rules, $errors);
         }
 
@@ -93,8 +93,10 @@ class StructureValidator
         $columnNames = array_map(static fn (object $col) => $col->column_name, $columns);
 
         // Check required columns
-        $columnErrors = ColumnValidator::validateRequired($columnNames, $rules['required_columns']);
-        $errors = array_merge($errors, $columnErrors);
+        if (isset($rules['required_columns'])) {
+            $columnErrors = ColumnValidator::validateRequired($columnNames, $rules['required_columns']);
+            $errors = array_merge($errors, $columnErrors);
+        }
 
         // Check column types if specified
         if (isset($rules['column_types'])) {

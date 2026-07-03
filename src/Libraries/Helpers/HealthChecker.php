@@ -145,7 +145,7 @@ class HealthChecker
         }
 
         $quotedColumn = '"' . str_replace('"', '""', $columnInfo->column_name) . '"';
-        $quotedTable = '"' . str_replace('"', '""', $sequence->table_name) . '"';
+        $quotedTable = 'public."' . str_replace('"', '""', $sequence->table_name) . '"';
         $maxValue = DB::selectOne(
             "SELECT COALESCE(MAX({$quotedColumn}), 0) as max_val FROM {$quotedTable}"
         );
@@ -218,8 +218,8 @@ class HealthChecker
         return DB::select("
             SELECT
                 schemaname,
-                tablename,
-                indexname,
+                relname AS tablename,
+                indexrelname AS indexname,
                 idx_scan,
                 pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
             FROM pg_stat_user_indexes

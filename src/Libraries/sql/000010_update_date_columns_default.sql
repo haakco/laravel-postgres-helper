@@ -22,6 +22,7 @@ BEGIN
         AND c.data_type LIKE '%timestamp%'
     WHERE
       t.table_type = 'BASE TABLE'
+      AND t.table_schema = 'public'
     ORDER BY
       t.table_schema,
       t.table_name

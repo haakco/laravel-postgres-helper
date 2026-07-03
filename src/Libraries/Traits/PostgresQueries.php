@@ -86,16 +86,26 @@ trait PostgresQueries
     /**
      * Get sequences for a specific table.
      *
-     * @return array<object{sequence_name: string}>
+     * @return array<object{sequence_schema: string, sequence_name: string, table_schema: string, table_name: string, column_name: string}>
      */
     protected static function getTableSequences(string $tableName): array
     {
         return DB::select("
-            SELECT seq.relname AS sequence_name
+            SELECT
+                seq_ns.nspname AS sequence_schema,
+                seq.relname AS sequence_name,
+                tbl_ns.nspname AS table_schema,
+                tbl.relname AS table_name,
+                att.attname AS column_name
             FROM pg_class seq
+            JOIN pg_namespace seq_ns ON seq.relnamespace = seq_ns.oid
             JOIN pg_depend dep ON seq.oid = dep.objid
             JOIN pg_class tbl ON dep.refobjid = tbl.oid
+            JOIN pg_namespace tbl_ns ON tbl.relnamespace = tbl_ns.oid
+            JOIN pg_attribute att ON att.attrelid = tbl.oid AND att.attnum = dep.refobjsubid
             WHERE seq.relkind = 'S'
+            AND seq_ns.nspname = 'public'
+            AND tbl_ns.nspname = 'public'
             AND tbl.relname = ?
         ", [$tableName]);
     }
@@ -103,20 +113,24 @@ trait PostgresQueries
     /**
      * Get column info for a sequence.
      *
-     * @return object{column_name: string}|null
+     * @return object{sequence_schema: string, column_name: string}|null
      */
     protected static function getSequenceColumnInfo(string $tableName, string $sequenceName): ?object
     {
-        return DB::selectOne('
-            SELECT attname AS column_name
+        return DB::selectOne("
+            SELECT seq_ns.nspname AS sequence_schema, pg_attribute.attname AS column_name
             FROM pg_attribute
             JOIN pg_class ON pg_attribute.attrelid = pg_class.oid
+            JOIN pg_namespace tbl_ns ON pg_class.relnamespace = tbl_ns.oid
             JOIN pg_depend ON pg_depend.refobjid = pg_class.oid
             JOIN pg_class seq ON seq.oid = pg_depend.objid
+            JOIN pg_namespace seq_ns ON seq.relnamespace = seq_ns.oid
             WHERE pg_class.relname = ?
+            AND tbl_ns.nspname = 'public'
             AND seq.relname = ?
+            AND seq_ns.nspname = 'public'
             AND pg_attribute.attnum = pg_depend.refobjsubid
-        ', [$tableName, $sequenceName]);
+        ", [$tableName, $sequenceName]);
     }
 
     /**

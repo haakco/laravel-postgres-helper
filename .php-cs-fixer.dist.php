@@ -135,7 +135,7 @@ return (new Config())
         'trailing_comma_in_multiline' => ['elements' => ['arrays']],
         'trim_array_spaces' => true,
         'unary_operator_spaces' => true,
-        'visibility_required' => [
+        'modifier_keywords' => [
             'elements' => ['method', 'property'],
         ],
         'whitespace_after_comma_in_array' => true,

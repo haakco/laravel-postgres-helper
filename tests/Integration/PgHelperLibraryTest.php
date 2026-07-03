@@ -28,6 +28,8 @@ final class PgHelperLibraryTest extends TestCase
     #[\Override]
     protected function tearDown(): void
     {
+        DB::statement('DROP SCHEMA IF EXISTS private_helper_test CASCADE');
+        DB::statement('DROP SCHEMA IF EXISTS "_timescaledb_catalog" CASCADE');
         $this->dropTestTables();
         parent::tearDown();
     }
@@ -145,6 +147,60 @@ final class PgHelperLibraryTest extends TestCase
         // Verify sequences are fixed
         $newId = DB::table('test_standard')->insertGetId(['name' => 'After fixAll']);
         self::assertGreaterThan(1000, $newId);
+    }
+
+    public function test_fix_all_keeps_sequences_at_or_above_one_when_table_contains_negative_ids(): void
+    {
+        DB::table('test_standard')->truncate();
+        DB::table('test_standard')->insert(['id' => -1, 'name' => 'Negative ID']);
+
+        PgHelperLibrary::fixAll();
+
+        $nextId = DB::selectOne("SELECT nextval('test_standard_id_seq') AS next_id");
+
+        self::assertNotNull($nextId);
+        self::assertGreaterThanOrEqual(1, $nextId->next_id);
+    }
+
+    public function test_fix_all_ignores_non_public_schema_tables(): void
+    {
+        DB::statement('CREATE SCHEMA IF NOT EXISTS "_timescaledb_catalog"');
+        DB::statement('CREATE TABLE "_timescaledb_catalog"."continuous_aggs_jobs_refresh_ranges" (id BIGSERIAL PRIMARY KEY, created_at TIMESTAMPTZ NULL)');
+
+        PgHelperLibrary::fixAll();
+
+        $column = DB::selectOne("
+            SELECT column_default
+            FROM information_schema.columns
+            WHERE table_schema = '_timescaledb_catalog'
+              AND table_name = 'continuous_aggs_jobs_refresh_ranges'
+              AND column_name = 'created_at'
+        ");
+
+        self::assertNotNull($column);
+        self::assertNull($column->column_default);
+    }
+
+    public function test_fix_all_does_not_repair_sequences_or_create_triggers_outside_public_schema(): void
+    {
+        DB::statement('CREATE SCHEMA private_helper_test');
+        DB::statement('CREATE TABLE private_helper_test.sequence_probe (id BIGSERIAL PRIMARY KEY, name TEXT, updated_at TIMESTAMPTZ NULL)');
+        DB::statement("INSERT INTO private_helper_test.sequence_probe (id, name) VALUES (1000, 'Manual ID')");
+
+        PgHelperLibrary::fixAll();
+
+        $trigger = DB::selectOne("
+            SELECT 1
+            FROM information_schema.triggers
+            WHERE trigger_schema = 'private_helper_test'
+              AND event_object_table = 'sequence_probe'
+              AND trigger_name = 'update_sequence_probe_updated_at'
+        ");
+        $nextId = DB::selectOne("SELECT nextval('private_helper_test.sequence_probe_id_seq') AS next_id");
+
+        self::assertNull($trigger);
+        self::assertNotNull($nextId);
+        self::assertLessThan(1000, $nextId->next_id);
     }
 
     public function test_it_skips_triggers_for_tables_without_updated_at(): void

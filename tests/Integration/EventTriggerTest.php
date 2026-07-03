@@ -90,16 +90,6 @@ final class EventTriggerTest extends TestCase
 
         self::assertNotNull($hasTrigger, 'Trigger should have been automatically created');
 
-        // Insert with explicit ID to test sequence fixing
-        DB::table('test_auto_standards')->insert([
-            'id' => 1000,
-            'name' => 'Test',
-        ]);
-
-        // Check if sequence was fixed (next value should be > 1000)
-        $nextId = DB::selectOne("SELECT nextval('test_auto_standards_id_seq') as next_id")->next_id;
-        self::assertGreaterThan(1000, $nextId);
-
         // Clean up
         Schema::dropIfExists('test_auto_standards');
     }

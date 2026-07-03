@@ -11,7 +11,7 @@ class SequenceValidator
     /**
      * Check if sequences need fixing.
      *
-     * @param array<object{sequence_name: string}> $sequences
+     * @param array<object{sequence_schema?: string, sequence_name: string, table_schema?: string, table_name?: string, column_name?: string}> $sequences
      *
      * @return array<string> Warning messages
      */
@@ -30,24 +30,56 @@ class SequenceValidator
     /**
      * Check a single sequence.
      *
-     * @param object{sequence_name: string} $sequence
+     * @param object{sequence_schema?: string, sequence_name: string, table_schema?: string, table_name?: string, column_name?: string} $sequence
      */
     private static function checkSequence(object $sequence): ?string
     {
-        $lastValue = self::getSequenceLastValue($sequence->sequence_name);
+        $sequenceSchema = $sequence->sequence_schema ?? 'public';
+        $lastValue = self::getSequenceLastValue($sequenceSchema, $sequence->sequence_name);
 
-        return $lastValue < 1
-            ? "Sequence '{$sequence->sequence_name}' may need to be reset"
-            : null;
+        if ($lastValue < 1) {
+            return "Sequence '{$sequence->sequence_name}' may need to be reset";
+        }
+
+        if (isset($sequence->table_name, $sequence->column_name)
+            && $lastValue < self::getColumnMaxValue($sequence->table_schema ?? 'public', $sequence->table_name, $sequence->column_name)) {
+            return "Sequence '{$sequence->sequence_name}' may need to be reset";
+        }
+
+        return null;
     }
 
     /**
      * Get the last value of a sequence.
      */
-    private static function getSequenceLastValue(string $sequenceName): int
+    private static function getSequenceLastValue(string $schemaName, string $sequenceName): int
     {
-        $result = DB::selectOne("SELECT last_value FROM {$sequenceName}");
+        $result = DB::selectOne(
+            'SELECT last_value FROM ' . self::quoteIdentifier($schemaName) . '.' . self::quoteIdentifier($sequenceName)
+        );
 
         return $result ? (int) $result->last_value : 0;
+    }
+
+    /**
+     * Get the highest explicit value currently stored for a sequence-backed column.
+     */
+    private static function getColumnMaxValue(string $schemaName, string $tableName, string $columnName): int
+    {
+        $result = DB::selectOne(\sprintf(
+            'SELECT COALESCE(MAX(%s), 0) AS max_value FROM %s',
+            self::quoteIdentifier($columnName),
+            self::quoteIdentifier($schemaName) . '.' . self::quoteIdentifier($tableName)
+        ));
+
+        return $result ? (int) $result->max_value : 0;
+    }
+
+    /**
+     * Quote a PostgreSQL identifier.
+     */
+    private static function quoteIdentifier(string $identifier): string
+    {
+        return '"' . str_replace('"', '""', $identifier) . '"';
     }
 }
