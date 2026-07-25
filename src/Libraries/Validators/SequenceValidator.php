@@ -20,7 +20,7 @@ class SequenceValidator
         return array_values(
             array_filter(
                 array_map(
-                    static fn (object $sequence): ?string => self::checkSequence($sequence),
+                    self::checkSequence(...),
                     $sequences
                 )
             )

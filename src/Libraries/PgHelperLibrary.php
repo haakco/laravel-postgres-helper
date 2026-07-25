@@ -20,9 +20,7 @@ class PgHelperLibrary
     use PostgresQueries;
     use SqlFileLoader;
 
-    /**
-     * @deprecated Use fixAll instead
-     */
+    #[\Deprecated(message: 'Use fixAll instead')]
     public static function removeUpdatedAtFunction(): void
     {
         DB::statement(
@@ -69,25 +67,19 @@ class PgHelperLibrary
         );
     }
 
-    /**
-     * @deprecated Use fixAll instead
-     */
+    #[\Deprecated(message: 'Use fixAll instead')]
     public static function addMissingUpdatedAtTriggers(): void
     {
         self::fixAll();
     }
 
-    /**
-     * @deprecated Use fixAll instead
-     */
+    #[\Deprecated(message: 'Use fixAll instead')]
     public static function setUpdatedAtTrigger(string $tableName): void
     {
         self::fixAll();
     }
 
-    /**
-     * @deprecated Use fixAll instead
-     */
+    #[\Deprecated(message: 'Use fixAll instead')]
     public static function setSequenceStart(string $tableName, ?int $startNo = null): void
     {
         self::fixAll();
@@ -313,11 +305,11 @@ class PgHelperLibrary
         return self::withTiming(
             static function (): array {
                 $healthChecks = [
-                    'sequences' => static fn (): array => HealthChecker::checkSequenceHealth(),
-                    'triggers' => static fn (): array => HealthChecker::checkTriggerHealth(),
-                    'structure' => static fn (): array => HealthChecker::checkStructureHealth(),
-                    'performance' => static fn (): array => HealthChecker::checkPerformanceHealth(),
-                    'indexes' => static fn (): array => HealthChecker::checkIndexHealth(),
+                    'sequences' => HealthChecker::checkSequenceHealth(...),
+                    'triggers' => HealthChecker::checkTriggerHealth(...),
+                    'structure' => HealthChecker::checkStructureHealth(...),
+                    'performance' => HealthChecker::checkPerformanceHealth(...),
+                    'indexes' => HealthChecker::checkIndexHealth(...),
                 ];
 
                 $checks = [];

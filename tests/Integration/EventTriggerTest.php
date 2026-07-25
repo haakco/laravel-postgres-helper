@@ -148,8 +148,8 @@ final class EventTriggerTest extends TestCase
         self::assertSame(2, $result['tables_processed']);
 
         // Should indicate what would be done
-        $sequencesToFix = array_filter($result['sequences_fixed'], static fn ($seq): bool => str_contains($seq, 'would fix'));
-        $triggersToCreate = array_filter($result['triggers_created'], static fn ($trig): bool => str_contains($trig, 'would create'));
+        $sequencesToFix = array_filter($result['sequences_fixed'], static fn (string $seq): bool => str_contains($seq, 'would fix'));
+        $triggersToCreate = array_filter($result['triggers_created'], static fn (string $trig): bool => str_contains($trig, 'would create'));
 
         self::assertNotEmpty($sequencesToFix);
         self::assertNotEmpty($triggersToCreate);
