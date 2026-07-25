@@ -6,6 +6,7 @@ use Rector\Config\RectorConfig;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\TypeDeclaration\Rector\FuncCall\AddArrayFunctionClosureParamTypeRector;
 
 return RectorConfig::configure()
     ->withPaths([
@@ -27,6 +28,10 @@ return RectorConfig::configure()
     ->withSkip([
         // Skip database migrations as they often need specific syntax
         __DIR__ . '/database/migrations',
+        // Rector 2.5.7 + PHPStan 2.x: PHPStanStaticTypeMapper has no
+        // handler for ObjectShapeType, rule crashes on array<string, mixed>.
+        // Track upstream: https://github.com/rectorphp/rector/issues
+        AddArrayFunctionClosureParamTypeRector::class,
     ])
     ->withCache(
         cacheDirectory: __DIR__ . '/.rector_cache'
