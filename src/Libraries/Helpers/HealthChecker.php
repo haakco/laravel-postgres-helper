@@ -203,7 +203,7 @@ class HealthChecker
         ");
 
         foreach ($largeTables as $table) {
-            $score -= min(10, 30 / max(1, \count($largeTables)));
+            $score -= (int) min(10, 30 / max(1, \count($largeTables)));
             $issues[] = "Large table: {$table->tablename} ({$table->size})";
         }
     }

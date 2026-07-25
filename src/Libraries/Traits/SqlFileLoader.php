@@ -16,7 +16,7 @@ trait SqlFileLoader
     protected static function executeSqlFile(string $filename): void
     {
         $sql = self::loadSqlFile($filename);
-        DB::unprepared($sql);
+        DB::statement($sql);
     }
 
     /**

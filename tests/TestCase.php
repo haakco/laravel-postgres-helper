@@ -36,11 +36,11 @@ abstract class TestCase extends Orchestra
         $app['config']->set('database.default', 'pgsql');
         $app['config']->set('database.connections.pgsql', [
             'driver' => 'pgsql',
-            'host' => env('DB_TEST_HOST', '127.0.0.1'),
-            'port' => env('DB_TEST_PORT', '5433'),
-            'database' => env('DB_TEST_DATABASE', 'laravel_postgres_helper_test'),
-            'username' => env('DB_TEST_USERNAME', 'postgres'),
-            'password' => env('DB_TEST_PASSWORD', 'postgres'),
+            'host' => $_ENV['DB_TEST_HOST'] ?? '127.0.0.1',
+            'port' => $_ENV['DB_TEST_PORT'] ?? '5433',
+            'database' => $_ENV['DB_TEST_DATABASE'] ?? 'laravel_postgres_helper_test',
+            'username' => $_ENV['DB_TEST_USERNAME'] ?? 'postgres',
+            'password' => $_ENV['DB_TEST_PASSWORD'] ?? 'postgres',
             'charset' => 'utf8',
             'prefix' => '',
             'schema' => 'public',

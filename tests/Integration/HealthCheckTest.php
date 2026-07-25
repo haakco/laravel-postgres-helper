@@ -70,9 +70,6 @@ final class HealthCheckTest extends TestCase
             self::assertArrayHasKey('status', $check);
             self::assertArrayHasKey('message', $check);
             self::assertArrayHasKey('score', $check);
-            self::assertIsString($check['status']);
-            self::assertIsString($check['message']);
-            self::assertIsInt($check['score']);
             self::assertGreaterThanOrEqual(0, $check['score']);
             self::assertLessThanOrEqual(100, $check['score']);
         }

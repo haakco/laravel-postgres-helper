@@ -64,7 +64,7 @@ final class SelectiveOperationsTest extends TestCase
         self::assertArrayHasKey('time_taken', $result);
         self::assertContains('test_users_id_seq', $result['sequences_fixed']);
         self::assertNotContains('test_posts_id_seq', $result['sequences_fixed']);
-        self::assertIsFloat($result['time_taken']);
+        self::assertGreaterThanOrEqual(0.0, $result['time_taken']);
         self::assertLessThan(1, $result['time_taken']); // Should be fast
 
         // Verify sequence was actually fixed
@@ -153,7 +153,7 @@ final class SelectiveOperationsTest extends TestCase
         // Check performance tracking
         $lastTime = PgHelperLibrary::getLastOperationTime();
         self::assertNotNull($lastTime);
-        self::assertIsFloat($lastTime);
+        self::assertGreaterThanOrEqual(0.0, $lastTime);
         self::assertLessThan(1, $lastTime); // Should be fast
 
         $stats = PgHelperLibrary::getOperationStats();

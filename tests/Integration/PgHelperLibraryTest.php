@@ -96,7 +96,7 @@ final class PgHelperLibraryTest extends TestCase
         $updatedRecord = DB::table('test_standard')->where('id', 1000)->first();
         self::assertNotNull($updatedRecord);
         self::assertObjectHasProperty('updated_at', $updatedRecord);
-        self::assertNotSame($originalUpdatedAt, $updatedRecord->updated_at); /* @phpstan-ignore-line */
+        self::assertNotSame($originalUpdatedAt, $updatedRecord->updated_at);
     }
 
     public function test_it_validates_table_structure(): void
@@ -134,7 +134,6 @@ final class PgHelperLibraryTest extends TestCase
             self::assertArrayHasKey('message', $result['checks'][$check]);
         }
 
-        self::assertIsInt($result['overall_score']);
         self::assertGreaterThanOrEqual(0, $result['overall_score']);
         self::assertLessThanOrEqual(100, $result['overall_score']);
     }
