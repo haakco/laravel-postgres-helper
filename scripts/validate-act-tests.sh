@@ -32,7 +32,7 @@ POSTGRES_VERSIONS=("13" "14" "15" "16")
 
 # Test a single combination for quick validation
 echo "🔄 Running quick validation test..."
-echo "   PHP: 8.3, Laravel: 11.*, PostgreSQL: 15"
+echo "   PHP: 8.3.36, Laravel: 11.*, PostgreSQL: 15"
 echo ""
 
 # Create a temporary event file for act
@@ -47,7 +47,7 @@ EOF
 # Run act with a single matrix combination
 act push \
     --rm \
-    --matrix php:8.3 \
+    --matrix php:8.3.36 \
     --matrix laravel:11.* \
     --matrix postgres:15 \
     --eventpath /tmp/act-event.json \
@@ -61,7 +61,7 @@ if [ $? -eq 0 ]; then
     echo "  act push --rm"
     echo ""
     echo "To run specific combinations, use:"
-    echo "  act push --rm --matrix php:8.3 --matrix laravel:11.* --matrix postgres:15"
+    echo "  act push --rm --matrix php:8.3.36 --matrix laravel:11.* --matrix postgres:15"
 else
     echo ""
     echo "❌ ACT validation failed!"

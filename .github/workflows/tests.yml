@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ["8.3", "8.4"]
+        php: ["8.3.36", "8.4.27"]
         laravel: ["10.*", "11.*", "12.*"]
         postgres: ["13", "14", "15", "16"]
         include:
@@ -55,6 +55,22 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_pgsql, bcmath
           coverage: none
+
+      - name: Verify PHP ${{ matrix.php }}
+        env:
+          EXPECTED_PHP_VERSION: ${{ matrix.php }}
+        run: |
+          case "$EXPECTED_PHP_VERSION" in
+            8.3.36) expected=80336 ;;
+            8.4.27) expected=80427 ;;
+            *) echo "::error::Unexpected PHP matrix value: $EXPECTED_PHP_VERSION"; exit 1 ;;
+          esac
+          actual=$(php -r 'echo PHP_VERSION_ID;')
+          if [ "$actual" -ne "$expected" ]; then
+            actual_version=$(php -r 'echo PHP_VERSION;')
+            printf 'Expected PHP %s (PHP_VERSION_ID %s); got %s (PHP_VERSION_ID %s)\n' "$EXPECTED_PHP_VERSION" "$expected" "$actual_version" "$actual" >&2
+            exit 1
+          fi
 
       - name: Setup problem matchers
         run: |
@@ -93,9 +109,12 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.3"
+          php-version: "8.3.36"
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, pdo_pgsql, bcmath
           coverage: none
+
+      - name: Verify PHP 8.3.36
+        run: php -r 'if (PHP_VERSION_ID !== 80336) { fwrite(STDERR, "Expected PHP 8.3.36 (PHP_VERSION_ID 80336); got " . PHP_VERSION . " (PHP_VERSION_ID " . PHP_VERSION_ID . ")" . PHP_EOL); exit(1); }'
 
       - name: Install dependencies
         run: composer install --prefer-stable --prefer-dist --no-interaction
